@@ -1,0 +1,34 @@
+<application>
+    <name>ROFT - Realsense</name>
+
+    <module>
+        <name>yarpdev</name>
+            <parameters>--context roft-tracker --from config_realsense_720p.ini </parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+            <parameters>--p 30 --name /roft-tracker/rgb-viewer:i</parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+            <parameters>--p 30 --name /roft-tracker/depth-viewer:i</parameters>
+        <node>localhost</node>
+    </module>
+
+    <connection>
+        <from>/depthCamera/rgbImage:o</from>
+        <to>/roft-tracker/rgb-viewer:i</to>
+        <protocol>mjpeg</protocol>
+    </connection>
+
+    <connection>
+        <from>/depthCamera/depthImage:o</from>
+        <to>/roft-tracker/depth-viewer:i</to>
+        <protocol>fast_tcp+recv.portmonitor+type.dll+file.depthimage_to_rgb</protocol>
+    </connection>
+
+</application>
