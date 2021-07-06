@@ -294,7 +294,7 @@ Tracker::Tracker(const ResourceFinder& rf)
     std::shared_ptr<RobotsIO::Utils::Transform> pose;
     if (pose_source == "YARP")
     {
-        pose = std::make_shared<TransformYarpPort>("/" + log_name_ + "/pose:i");
+        pose = std::make_shared<TransformYarpPort>("/" + log_name_ + "/pose:i", true);
     }
     else
         throw(std::runtime_error(log_name_ + "::ctor. Error: unknown pose source " + pose_source + "."));
