@@ -301,10 +301,16 @@ Tracker::Tracker(const ResourceFinder& rf)
 
     /* Flow. */
     std::shared_ptr<ImageOpticalFlowSource> flow;
-    if (optical_flow_source == "NVOF")
+    if (optical_flow_source == "NVOF_1_0")
     {
-        flow = std::make_shared<OTL::ImageOpticalFlowNVOF>(camera, OTL::ImageOpticalFlowNVOF::NVOFPerformance::Slow, false);
+        flow = std::make_shared<OTL::ImageOpticalFlowNVOF>(camera, OTL::ImageOpticalFlowNVOF::NVOFPerformance_1_0::Slow, false);
     }
+#if CV_MAJOR_VERSION == 4 && CV_MINOR_VERSION == 5 && CV_SUBMINOR_VERSION >= 2
+    else if (optical_flow_source == "NVOF_2_0")
+    {
+        flow = std::make_shared<OTL::ImageOpticalFlowNVOF>(camera, OTL::ImageOpticalFlowNVOF::NVOFPerformance_2_0::Slow, false);
+    }
+#endif
     else
         throw(std::runtime_error(log_name_ + "::ctor. Error: unknown optical flow source " + pose_source + "."));
 }
