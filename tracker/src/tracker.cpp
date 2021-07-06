@@ -10,6 +10,7 @@
 #include <iostream>
 #include <memory>
 
+#include <OTL/CameraMeasurement.h>
 #include <OTL/ModelParameters.h>
 #include <OTL/ImageOpticalFlowSource.h>
 #include <OTL/ImageOpticalFlowNVOF.h>
@@ -267,17 +268,18 @@ Tracker::Tracker(const ResourceFinder& rf)
     model_parameters.mesh_external_path(model_external_path);
 
     /* Camera. */
-    std::shared_ptr<Camera> camera;
+    std::shared_ptr<Camera> camera_src;
     if (camera_source == "RealSense")
     {
-        camera = std::make_shared<RealsenseCameraYarp>(log_name_);
+        camera_src = std::make_shared<RealsenseCameraYarp>(log_name_);
     }
     else if (camera_source == "YARP")
     {
-        camera = std::make_shared<YarpCamera>(camera_width, camera_height, camera_fx, camera_cx, camera_fy, camera_cy, log_name_);
+        camera_src = std::make_shared<YarpCamera>(camera_width, camera_height, camera_fx, camera_cx, camera_fy, camera_cy, log_name_);
     }
     else
         throw(std::runtime_error(log_name_ + "::ctor. Error: unknown camera source " + camera_source + "."));
+    std::shared_ptr<CameraMeasurement> camera = std::make_shared<CameraMeasurement>(std::move(camera_src));
 
     /* Segmentation. */
     std::shared_ptr<Segmentation> segmentation;
