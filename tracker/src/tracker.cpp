@@ -289,7 +289,7 @@ Tracker::Tracker(const ResourceFinder& rf)
         segmentation = std::make_shared<SegmentationYarpPort>("/" + log_name_, true);
     }
     else
-        throw(std::runtime_error(log_name_ + "::ctor. Error: unknown camera source " + segmentation_source + "."));
+        throw(std::runtime_error(log_name_ + "::ctor. Error: unknown segmentation source " + segmentation_source + "."));
 
     /* Pose. */
     std::shared_ptr<RobotsIO::Utils::Transform> pose;
