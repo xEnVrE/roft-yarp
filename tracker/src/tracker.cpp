@@ -285,7 +285,7 @@ Tracker::Tracker(const ResourceFinder& rf)
     std::shared_ptr<Segmentation> segmentation;
     if (segmentation_source == "YARP")
     {
-        segmentation = std::make_shared<SegmentationYarpPort>("/" + log_name_ + "/", true);
+        segmentation = std::make_shared<SegmentationYarpPort>("/" + log_name_, true);
     }
     else
         throw(std::runtime_error(log_name_ + "::ctor. Error: unknown camera source " + segmentation_source + "."));
