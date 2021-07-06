@@ -1,0 +1,3 @@
+yarpview --name /rgb:i &
+yarpview --name /depth:i &
+yarpview --name /mask:i &
