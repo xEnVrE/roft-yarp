@@ -14,6 +14,7 @@
 #include <OTL/ModelParameters.h>
 #include <OTL/ImageOpticalFlowSource.h>
 #include <OTL/ImageOpticalFlowNVOF.h>
+#include <OTL/OFAidedFilter.h>
 
 #include <RobotsIO/Camera/Camera.h>
 #include <RobotsIO/Camera/RealsenseCameraYarp.h>
@@ -313,6 +314,28 @@ Tracker::Tracker(const ResourceFinder& rf)
 #endif
     else
         throw(std::runtime_error(log_name_ + "::ctor. Error: unknown optical flow source " + pose_source + "."));
+
+    /* Filter. */
+    filter_ = std::make_unique<OFAidedFilter>
+    (
+        /* Sources. */
+        camera, segmentation, flow, pose,
+        /* Object model. */
+        model_parameters,
+        /* Initial pose and covariance. */
+        p_initial_condition, p_initial_covariance, p_model_covariance, p_measurement_covariance,
+        /* Initial velocity and covariance. */
+        v_initial_condition, v_initial_covariance, v_model_covariance, v_measurement_covariance,
+        /* Unscented Transform (UT) parameters. */
+        ut_alpha, ut_beta, ut_kappa,
+        /* Sample time. */
+        sample_time,
+        /* Flags for enabling/disabling internal mechanisms. */
+        use_pose_measurement, use_pose_resync, outlier_rejection_enable, outlier_rejection_gain,
+        use_velocity_measurement, flow_weighting, flow_aided_segmentation, depth_maximum, subsampling_radius,
+        /* Logging (disabled). */
+        false, "", ""
+    );
 }
 
 
