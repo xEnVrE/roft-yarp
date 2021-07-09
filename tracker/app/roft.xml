@@ -1,0 +1,57 @@
+<application>
+    <name>ROFT</name>
+
+    <module>
+        <name>roft-tracker</name>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+            <parameters>--p 30 --name /roft-tracker/viewer/segmentation:i</parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+            <parameters>--p 30 --name /roft-tracker/viewer/refined_segmentation:i</parameters>
+        <node>localhost</node>
+    </module>
+
+    <connection>
+        <from>/roft-tracker/segmentation/rgb:o</from>
+        <to>/detectron2/rgb:i</to>
+        <protocol>mjpeg</protocol>
+    </connection>
+
+    <connection>
+        <from>/depthCamera/depthImage:o</from>
+        <to>/roft-tracker/depth:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/depthCamera/rgbImage:o</from>
+        <to>/roft-tracker/rgb:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/detectron2/mask:o</from>
+        <to>/roft-tracker/segmentation/segmentation:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/roft-tracker/probe/segmentation:o</from>
+        <to>/roft-tracker/viewer/refined_segmentation:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/detectron2/mask:o</from>
+        <to>/roft-tracker/viewer/segmentation:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+</application>
