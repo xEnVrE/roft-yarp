@@ -10,6 +10,8 @@
 #include <iostream>
 #include <memory>
 
+#include <yarp/sig/Image.h>
+
 #include <OTL/CameraMeasurement.h>
 #include <OTL/ModelParameters.h>
 #include <OTL/ImageOpticalFlowSource.h>
@@ -22,12 +24,15 @@
 #include <RobotsIO/Utils/SegmentationYarpPort.h>
 #include <RobotsIO/Utils/Transform.h>
 #include <RobotsIO/Utils/TransformYarpPort.h>
+#include <RobotsIO/Utils/YarpImageOfProbe.hpp>
+#include <RobotsIO/Utils/YarpVectorOfProbe.hpp>
 
 using namespace Eigen;
 using namespace OTL;
 using namespace RobotsIO::Camera;
 using namespace RobotsIO::Utils;
 using namespace yarp::os;
+using namespace yarp::sig;
 
 
 Tracker::Tracker(const ResourceFinder& rf)
@@ -120,6 +125,7 @@ Tracker::Tracker(const ResourceFinder& rf)
     const Bottle rf_segmentation = rf.findGroup("SEGMENTATION");
     const std::string segmentation_source = rf_segmentation.check("source", Value("")).asString();
     const bool flow_aided_segmentation = rf_segmentation.check("flow_aided", Value(false)).asBool();
+    const bool wait_segmentation_initialization = rf_segmentation.check("wait_initialization", Value(false)).asBool();
 
     /* Unscented transform. */
     const Bottle rf_unscented_transform = rf.findGroup("UNSCENTED_TRANSFORM");
@@ -213,6 +219,7 @@ Tracker::Tracker(const ResourceFinder& rf)
 
     std::cout << "- source: " << segmentation_source << std::endl;
     std::cout << "- flow_aided: " << flow_aided_segmentation << std::endl << std::endl;
+    std::cout << "- wait_initialization: " << wait_segmentation_initialization << std::endl << std::endl;
 
     std::cout << "Unscented transform:" << std::endl;
     std::cout << "- alpha: " << ut_alpha << std::endl;
@@ -286,7 +293,7 @@ Tracker::Tracker(const ResourceFinder& rf)
     std::shared_ptr<Segmentation> segmentation;
     if (segmentation_source == "YARP")
     {
-        segmentation = std::make_shared<SegmentationYarpPort>("/" + log_name_, true);
+        segmentation = std::make_shared<SegmentationYarpPort>("/" + log_name_ + "/segmentation", true);
     }
     else
         throw(std::runtime_error(log_name_ + "::ctor. Error: unknown segmentation source " + segmentation_source + "."));
@@ -295,7 +302,7 @@ Tracker::Tracker(const ResourceFinder& rf)
     std::shared_ptr<RobotsIO::Utils::Transform> pose;
     if (pose_source == "YARP")
     {
-        pose = std::make_shared<TransformYarpPort>("/" + log_name_ + "/pose:i", true);
+        pose = std::make_shared<TransformYarpPort>("/" + log_name_ + "/pose", true);
     }
     else
         throw(std::runtime_error(log_name_ + "::ctor. Error: unknown pose source " + pose_source + "."));
@@ -332,10 +339,25 @@ Tracker::Tracker(const ResourceFinder& rf)
         sample_time,
         /* Flags for enabling/disabling internal mechanisms. */
         use_pose_measurement, use_pose_resync, outlier_rejection_enable, outlier_rejection_gain,
-        use_velocity_measurement, flow_weighting, flow_aided_segmentation, depth_maximum, subsampling_radius,
+        use_velocity_measurement, flow_weighting, flow_aided_segmentation, wait_segmentation_initialization, depth_maximum, subsampling_radius,
         /* Logging (disabled). */
         false, "", ""
     );
+
+    {
+        auto probe = std::make_unique<YarpImageOfProbe<PixelRgb>>("/" + log_name_ + "/probe/segmentation:o");
+        filter_->set_probe("output_segmentation_refined", std::move(probe));
+    }
+
+    {
+        auto probe = std::make_unique<YarpVectorOfProbe<double, Eigen::VectorXd>>("/" + log_name_ + "/probe/velocity:o");
+        filter_->set_probe("output_velocity", std::move(probe));
+    }
+
+    filter_->boot();
+    filter_->run();
+    if (!filter_->wait())
+        return;
 }
 
 
