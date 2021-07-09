@@ -15,7 +15,7 @@
 
 #include <Eigen/Dense>
 
-#include <OTL/OFAidedFilter.h>
+#include <OTL/OFAidedFilterOnline.h>
 
 
 class Tracker : public TrackerIDL
@@ -32,7 +32,7 @@ public:
 private:
     Eigen::VectorXd load_vector_double(const yarp::os::Bottle& resource, const std::string& key, const std::size_t size);
 
-    std::unique_ptr<OTL::OFAidedFilter> filter_;
+    std::unique_ptr<OTL::OFAidedFilterOnline> filter_;
 
     const std::string log_name_ = "roft-tracker";
 };
