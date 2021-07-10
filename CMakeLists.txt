@@ -25,9 +25,13 @@ include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
 icubcontrib_add_uninstall_target()
 
+option(BUILD_TRACKER   "Build roft-tracker."  OFF)
 option(BUILD_REALSENSE "Build roft-realsense 60fps RealSense streamer."  OFF)
 
-add_subdirectory(tracker)
+if (BUILD_TRACKER)
+   add_subdirectory(tracker)
+endif()
+
 if (BUILD_REALSENSE)
    add_subdirectory(realsense)
 endif()
