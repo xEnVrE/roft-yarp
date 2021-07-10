@@ -51,11 +51,14 @@ int main(int argc, char ** argv)
     rs2::colorizer c;
     while (true)
     {
-        /* Local timer. */
-        auto time0 = std::chrono::steady_clock::now();
-
         /* Wait for new frames. */
         rs2::frameset frameset = pipe.wait_for_frames();
+
+        /* Get current time. */
+        auto now = std::chrono::steady_clock::now();
+        auto now_ns = std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
+        auto epoch_ns = now_ns.time_since_epoch();
+        double absolute_sec = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch_ns).count() / (1000.0 * 1000.0 * 1000.0);
 
         /* Align frames. */
         frameset = align_to_color.process(frameset);
@@ -76,6 +79,10 @@ int main(int argc, char ** argv)
         output_rgb = cv_rgb.clone();
         cv::cvtColor(output_rgb, output_rgb, CV_RGB2BGR);
         output_depth = cv_depth.clone();
+
+        /* Set time stamps. */
+        yarp_output_rgb.set_time_stamp(absolute_sec);
+        yarp_output_depth.set_time_stamp(absolute_sec);
 
         yarp_output_rgb.set_data(output_rgb);
         yarp_output_depth.set_data(output_depth);
