@@ -19,6 +19,12 @@
         <node>localhost</node>
     </module>
 
+    <module>
+        <name>yarpview</name>
+        <parameters>--p 10 --name /roft-tracker/viewer/pose_estimation:i</parameters>
+        <node>localhost</node>
+    </module>
+
     <connection>
         <from>/roft-tracker/segmentation/rgb:o</from>
         <to>/detectron2/rgb:i</to>
@@ -53,6 +59,24 @@
         <from>/detectron2/mask:o</from>
         <to>/roft-tracker/viewer/segmentation:i</to>
         <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/dope/pose:o</from>
+        <to>/roft-tracker/pose/transform:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/roft-tracker/pose/rgb:o</from>
+        <to>/dope/rgb:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/dope/rgb:o</from>
+        <to>/roft-tracker/viewer/pose_estimation:i</to>
+        <protocol>mjpeg</protocol>
     </connection>
 
 </application>
