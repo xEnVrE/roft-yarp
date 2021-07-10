@@ -84,6 +84,7 @@ int main(int argc, char ** argv)
         yarp_output_rgb.set_time_stamp(absolute_sec);
         yarp_output_depth.set_time_stamp(absolute_sec);
 
+        /* Send images. */
         yarp_output_rgb.set_data(output_rgb);
         yarp_output_depth.set_data(output_depth);
     }
