@@ -4,17 +4,18 @@
     <module>
         <name>roft-tracker</name>
         <node>localhost</node>
+        <parameters>--CAMERA::source RealSense</parameters>
     </module>
 
     <module>
         <name>yarpview</name>
-            <parameters>--p 30 --name /roft-tracker/viewer/segmentation:i</parameters>
+        <parameters>--p 30 --name /roft-tracker/viewer/segmentation:i</parameters>
         <node>localhost</node>
     </module>
 
     <module>
         <name>yarpview</name>
-            <parameters>--p 30 --name /roft-tracker/viewer/refined_segmentation:i</parameters>
+        <parameters>--p 30 --name /roft-tracker/viewer/refined_segmentation:i</parameters>
         <node>localhost</node>
     </module>
 
