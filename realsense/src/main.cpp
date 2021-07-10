@@ -44,8 +44,8 @@ int main(int argc, char ** argv)
     cv::Mat output_depth;
 
     /* YARP output ports. */
-    YarpImageOfProbe<PixelRgb> yarp_output_rgb("/roft-realsense/rgb:o");
-    YarpImageOfProbe<PixelFloat> yarp_output_depth("/roft-realsense/depth:o");
+    YarpImageOfProbe<PixelRgb> yarp_output_rgb("/depthCamera/rgbImage:o");
+    YarpImageOfProbe<PixelFloat> yarp_output_depth("/depthCamera/depthImage:o");
 
     /* While loop for data collection. */
     rs2::colorizer c;
