@@ -353,6 +353,11 @@ Tracker::Tracker(const ResourceFinder& rf)
         filter_->set_probe("output_velocity", std::move(probe));
     }
 
+    {
+        auto probe = std::make_unique<YarpVectorOfProbe<double, Eigen::VectorXd>>("/" + log_name_ + "/probe/pose:o");
+        filter_->set_probe("output_pose", std::move(probe));
+    }
+
     filter_->boot();
     filter_->run();
     if (!filter_->wait())
