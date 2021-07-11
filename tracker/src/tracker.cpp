@@ -201,6 +201,7 @@ Tracker::Tracker(const ResourceFinder& rf)
     std::cout << "- model_use_internal_db: " << model_use_internal_db << std::endl;
     std::cout << "- model_internal_db_name: " << model_internal_db_name << std::endl;
     std::cout << "- model_external_path: " << model_external_path << std::endl << std::endl;
+    std::cout << "- textured_model_external_path: " << textured_model_external_path << std::endl << std::endl;
 
     std::cout << "Optical flow:" << std::endl;
 
