@@ -349,6 +349,11 @@ Tracker::Tracker(const ResourceFinder& rf)
     }
 
     {
+        auto probe = std::make_unique<YarpImageOfProbe<PixelRgb>>("/" + log_name_ + "/probe/outlier_rejection:o");
+        filter_->set_probe("output_outlier_rejection", std::move(probe));
+    }
+
+    {
         auto probe = std::make_unique<YarpVectorOfProbe<double, Eigen::VectorXd>>("/" + log_name_ + "/probe/velocity:o");
         filter_->set_probe("output_velocity", std::move(probe));
     }

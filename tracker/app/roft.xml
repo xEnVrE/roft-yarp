@@ -25,6 +25,12 @@
         <node>localhost</node>
     </module>
 
+    <module>
+        <name>yarpview</name>
+        <parameters>--p 10 --name /roft-tracker/viewer/outlier_rejection:i</parameters>
+        <node>localhost</node>
+    </module>
+
     <connection>
         <from>/roft-tracker/segmentation/rgb:o</from>
         <to>/detectron2/rgb:i</to>
@@ -52,7 +58,7 @@
     <connection>
         <from>/roft-tracker/probe/segmentation:o</from>
         <to>/roft-tracker/viewer/refined_segmentation:i</to>
-        <protocol>fast_tcp</protocol>
+        <protocol>unix_stream</protocol>
     </connection>
 
     <connection>
@@ -77,6 +83,11 @@
         <from>/dope/rgb:o</from>
         <to>/roft-tracker/viewer/pose_estimation:i</to>
         <protocol>mjpeg</protocol>
+    </connection>
+
+    <connection>
+        <from>/roft-tracker/probe/outlier_rejection:o</from>
+        <to>/roft-tracker/viewer/outlier_rejection:i</to>
     </connection>
 
 </application>
