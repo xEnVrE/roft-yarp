@@ -103,6 +103,7 @@ Tracker::Tracker(const ResourceFinder& rf)
     const bool model_use_internal_db = rf_model.check("use_internal_db", Value(true)).asBool();
     const std::string model_internal_db_name = rf_model.check("internal_db_name", Value("YCBVideo")).asString();
     const std::string model_external_path = rf_model.check("external_path", Value("")).asString();
+    const std::string textured_model_external_path = rf_model.check("textured_mesh_path", Value("")).asString();
 
     /* Optical flow. */
 
@@ -273,6 +274,7 @@ Tracker::Tracker(const ResourceFinder& rf)
     model_parameters.use_internal_db(model_use_internal_db);
     model_parameters.internal_db_name(model_internal_db_name);
     model_parameters.mesh_external_path(model_external_path);
+    model_parameters.textured_mesh_external_path(textured_model_external_path);
 
     /* Camera. */
     std::shared_ptr<Camera> camera_src;
@@ -351,6 +353,11 @@ Tracker::Tracker(const ResourceFinder& rf)
     {
         auto probe = std::make_unique<YarpImageOfProbe<PixelRgb>>("/" + log_name_ + "/probe/outlier_rejection:o");
         filter_->set_probe("output_outlier_rejection", std::move(probe));
+    }
+
+    {
+        auto probe = std::make_unique<YarpImageOfProbe<PixelRgb>>("/" + log_name_ + "/probe/pose_render:o");
+        filter_->set_probe("output_pose_render", std::move(probe));
     }
 
     {
