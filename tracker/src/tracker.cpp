@@ -362,6 +362,11 @@ Tracker::Tracker(const ResourceFinder& rf)
     }
 
     {
+        auto probe = std::make_unique<YarpImageOfProbe<PixelRgb>>("/" + log_name_ + "/probe/pose_source_render:o");
+        filter_->set_probe("output_pose_source_render", std::move(probe));
+    }
+
+    {
         auto probe = std::make_unique<YarpVectorOfProbe<double, Eigen::VectorXd>>("/" + log_name_ + "/probe/velocity:o");
         filter_->set_probe("output_velocity", std::move(probe));
     }
