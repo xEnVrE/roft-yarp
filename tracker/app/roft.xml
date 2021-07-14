@@ -9,31 +9,31 @@
 
     <module>
         <name>yarpview</name>
-        <parameters>--p 30 --name /roft-tracker/viewer/segmentation:i</parameters>
+        <parameters>--name /roft-tracker/viewer/segmentation:i</parameters>
         <node>localhost</node>
     </module>
 
     <module>
         <name>yarpview</name>
-        <parameters>--p 30 --name /roft-tracker/viewer/refined_segmentation:i</parameters>
+        <parameters>--name /roft-tracker/viewer/refined_segmentation:i</parameters>
         <node>localhost</node>
     </module>
 
     <module>
         <name>yarpview</name>
-        <parameters>--p 10 --name /roft-tracker/viewer/pose_estimation:i</parameters>
+        <parameters>--name /roft-tracker/viewer/pose_estimation:i</parameters>
         <node>localhost</node>
     </module>
 
     <module>
         <name>yarpview</name>
-        <parameters>--p 10 --name /roft-tracker/viewer/outlier_rejection:i</parameters>
+        <parameters>--name /roft-tracker/viewer/outlier_rejection:i</parameters>
         <node>localhost</node>
     </module>
 
     <module>
         <name>yarpview</name>
-        <parameters>--p 50 --name /roft-tracker/viewer/pose_render:i</parameters>
+        <parameters>--name /roft-tracker/viewer/pose_render:i</parameters>
         <node>localhost</node>
     </module>
 
@@ -86,7 +86,7 @@
     </connection>
 
     <connection>
-        <from>/dope/rgb:o</from>
+        <from>/roft-tracker/probe/pose_source_render:o</from>
         <to>/roft-tracker/viewer/pose_estimation:i</to>
         <protocol>mjpeg</protocol>
     </connection>
