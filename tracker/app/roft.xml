@@ -4,7 +4,7 @@
     <module>
         <name>roft-tracker</name>
         <node>localhost</node>
-        <parameters>--CAMERA::source RealSense</parameters>
+        <parameters></parameters>
     </module>
 
     <module>
@@ -68,7 +68,7 @@
     </connection>
 
     <connection>
-        <from>/detectron2/mask:o</from>
+        <from>/roft-tracker/probe/segmentation_source:o</from>
         <to>/roft-tracker/viewer/segmentation:i</to>
         <protocol>fast_tcp</protocol>
     </connection>
