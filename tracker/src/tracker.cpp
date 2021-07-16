@@ -339,11 +339,11 @@ Tracker::Tracker(const ResourceFinder& rf)
         ut_alpha, ut_beta, ut_kappa,
         /* Sample time. */
         sample_time,
+        /* Thresholds. */
+        depth_maximum, subsampling_radius,
         /* Flags for enabling/disabling internal mechanisms. */
         use_pose_measurement, use_pose_resync, outlier_rejection_enable, outlier_rejection_gain,
-        use_velocity_measurement, flow_weighting, flow_aided_segmentation, wait_segmentation_initialization, depth_maximum, subsampling_radius,
-        /* Logging (disabled). */
-        false, "", ""
+        use_velocity_measurement, flow_weighting, flow_aided_segmentation, wait_segmentation_initialization
     );
 
     {
