@@ -103,7 +103,7 @@ Tracker::Tracker(const ResourceFinder& rf)
     const bool model_use_internal_db = rf_model.check("use_internal_db", Value(true)).asBool();
     const std::string model_internal_db_name = rf_model.check("internal_db_name", Value("YCBVideo")).asString();
     const std::string model_external_path = rf_model.check("external_path", Value("")).asString();
-    const std::string textured_model_external_path = rf_model.check("textured_mesh_path", Value("")).asString();
+    const std::string textured_model_external_path = rf_model.check("textured_mesh_path", Value("")).asString() + "/" + model_name + "/textured.obj";
 
     /* Optical flow. */
 
