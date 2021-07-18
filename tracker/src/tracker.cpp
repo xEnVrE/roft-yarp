@@ -116,6 +116,11 @@ Tracker::Tracker(const ResourceFinder& rf)
     const bool outlier_rejection_enable = rf_outlier.check("enable", Value(false)).asBool();
     const double outlier_rejection_gain = rf_outlier.check("gain", Value(1.0)).asDouble();
 
+    /* Output format. */
+
+    const Bottle rf_output_format = rf.findGroup("OUTPUT_FORMAT");
+    const std::string output_format_reference_frame = rf_output_format.check("reference_frame", Value("camera")).asString();
+
     /* Pose .*/
 
     const Bottle& pose_bottle = rf.findGroup("POSE");
@@ -212,6 +217,10 @@ Tracker::Tracker(const ResourceFinder& rf)
     std::cout << "- enable: " << outlier_rejection_enable << std::endl;
     std::cout << "- gain: " << outlier_rejection_gain << std::endl << std::endl;
 
+    std::cout << "Output format:" << std::endl;
+
+    std::cout << "- reference_frame: " << output_format_reference_frame << std::endl << std::endl;
+
     std::cout << "Pose:" << std::endl;
 
     std::cout << "- source: " << pose_source << std::endl << std::endl;
@@ -277,6 +286,15 @@ Tracker::Tracker(const ResourceFinder& rf)
     model_parameters.mesh_external_path(model_external_path);
     model_parameters.textured_mesh_external_path(textured_model_external_path);
 
+    /* Output format. */
+    bool yarp_camera_enable_camera_pose;
+    if (output_format_reference_frame == "camera")
+        yarp_camera_enable_camera_pose = false;
+    else if (output_format_reference_frame == "root")
+        yarp_camera_enable_camera_pose = true;
+    else
+        throw(std::runtime_error(log_name_ + "::ctor. Error: unknown output format reference frame " + output_format_reference_frame + "."));
+
     /* Camera. */
     std::shared_ptr<Camera> camera_src;
     if (camera_source == "RealSense")
@@ -285,7 +303,7 @@ Tracker::Tracker(const ResourceFinder& rf)
     }
     else if (camera_source == "YARP")
     {
-        camera_src = std::make_shared<YarpCamera>(camera_width, camera_height, camera_fx, camera_cx, camera_fy, camera_cy, log_name_);
+        camera_src = std::make_shared<YarpCamera>(camera_width, camera_height, camera_fx, camera_cx, camera_fy, camera_cy, log_name_ + "/camera", yarp_camera_enable_camera_pose);
     }
     else
         throw(std::runtime_error(log_name_ + "::ctor. Error: unknown camera source " + camera_source + "."));
@@ -343,7 +361,9 @@ Tracker::Tracker(const ResourceFinder& rf)
         depth_maximum, subsampling_radius,
         /* Flags for enabling/disabling internal mechanisms. */
         use_pose_measurement, use_pose_resync, outlier_rejection_enable, outlier_rejection_gain,
-        use_velocity_measurement, flow_weighting, flow_aided_segmentation, wait_segmentation_initialization
+        use_velocity_measurement, flow_weighting, flow_aided_segmentation, wait_segmentation_initialization,
+        /* The reference frame in which the pose has to be expressed. */
+        output_format_reference_frame
     );
 
     {

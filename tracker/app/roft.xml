@@ -4,7 +4,7 @@
     <module>
         <name>roft-tracker</name>
         <node>localhost</node>
-        <parameters></parameters>
+        <parameters>--OUTPUT_FORMAT::reference_frame root</parameters>
     </module>
 
     <module>
@@ -45,13 +45,19 @@
 
     <connection>
         <from>/depthCamera/depthImage:o</from>
-        <to>/roft-tracker/depth:i</to>
+        <to>/roft-tracker/camera/depth:i</to>
         <protocol>fast_tcp</protocol>
     </connection>
 
     <connection>
         <from>/depthCamera/rgbImage:o</from>
-        <to>/roft-tracker/rgb:i</to>
+        <to>/roft-tracker/camera/rgb:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/realsense-holder-publisher/pose:o</from>
+        <to>/roft-tracker/camera/pose:i</to>
         <protocol>fast_tcp</protocol>
     </connection>
 
