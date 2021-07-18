@@ -76,7 +76,25 @@
     <connection>
         <from>/roft-tracker/probe/segmentation_source:o</from>
         <to>/roft-tracker/viewer/segmentation:i</to>
-        <protocol>fast_tcp</protocol>
+        <protocol>unix_stream</protocol>
+    </connection>
+
+    <connection>
+        <from>/roft-tracker/probe/pose_source_render:o</from>
+        <to>/roft-tracker/viewer/pose_estimation:i</to>
+        <protocol>unix_stream</protocol>
+    </connection>
+
+    <connection>
+        <from>/roft-tracker/probe/outlier_rejection:o</from>
+        <to>/roft-tracker/viewer/outlier_rejection:i</to>
+        <protocol>unix_stream</protocol>
+    </connection>
+
+    <connection>
+        <from>/roft-tracker/probe/pose_render:o</from>
+        <to>/roft-tracker/viewer/pose_render:i</to>
+        <protocol>unix_stream</protocol>
     </connection>
 
     <connection>
@@ -89,24 +107,6 @@
         <from>/roft-tracker/pose/rgb:o</from>
         <to>/dope/rgb:i</to>
         <protocol>fast_tcp</protocol>
-    </connection>
-
-    <connection>
-        <from>/roft-tracker/probe/pose_source_render:o</from>
-        <to>/roft-tracker/viewer/pose_estimation:i</to>
-        <protocol>mjpeg</protocol>
-    </connection>
-
-    <connection>
-        <from>/roft-tracker/probe/outlier_rejection:o</from>
-        <to>/roft-tracker/viewer/outlier_rejection:i</to>
-        <protocol>mjpeg</protocol>
-    </connection>
-
-    <connection>
-        <from>/roft-tracker/probe/pose_render:o</from>
-        <to>/roft-tracker/viewer/pose_render:i</to>
-        <protocol>mjpeg</protocol>
     </connection>
 
 </application>
