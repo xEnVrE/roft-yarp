@@ -22,6 +22,14 @@ ProbeRedball::ProbeRedball(const std::string& port_name) :
 {}
 
 
+ProbeRedball::ProbeRedball(const std::string& port_name, const double& max_x, const double& radius) :
+    YarpBufferedPort<Vector>(port_name),
+    max_x_(max_x),
+    radius_(radius),
+    enforce_limits_(true)
+{}
+
+
 void ProbeRedball::on_new_data()
 {
     VectorXd data = any_cast<VectorXd>(get_data());
@@ -33,8 +41,18 @@ void ProbeRedball::on_new_data()
     data_(1) = data[1];
     data_(2) = data[2];
 
-    /* Estimate validity. */
-    data_(6) = 1.0;
+    /* Validity of the estimate. */
+    double validity = 1.0;
+
+    if (enforce_limits_)
+    {
+        if ((data_(0) > max_x_) ||
+            (abs(data_(0)) > radius_) ||
+            (abs(data_(1)) > radius_) ||
+            (abs(data_(2)) > radius_))
+            validity = 0.0;
+    }
+    data_(6) = validity;
 
     /* The following are not actually used by the RedBall demo. */
 
