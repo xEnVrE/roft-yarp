@@ -4,7 +4,7 @@
     <module>
         <name>roft-tracker</name>
         <node>localhost</node>
-        <parameters>--OUTPUT_FORMAT::reference_frame root</parameters>
+        <parameters>--OUTPUT_FORMAT::reference_frame root --OUTPUT_FORMAT::redball_format false</parameters>
     </module>
 
     <module>

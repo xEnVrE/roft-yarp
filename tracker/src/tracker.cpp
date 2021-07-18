@@ -6,6 +6,7 @@
  */
 
 #include <tracker.h>
+#include <probe_redball.h>
 
 #include <iostream>
 #include <memory>
@@ -120,6 +121,7 @@ Tracker::Tracker(const ResourceFinder& rf)
 
     const Bottle rf_output_format = rf.findGroup("OUTPUT_FORMAT");
     const std::string output_format_reference_frame = rf_output_format.check("reference_frame", Value("camera")).asString();
+    const bool output_format_redball_format = rf_output_format.check("redball_format", Value(false)).asBool();
 
     /* Pose .*/
 
@@ -220,6 +222,7 @@ Tracker::Tracker(const ResourceFinder& rf)
     std::cout << "Output format:" << std::endl;
 
     std::cout << "- reference_frame: " << output_format_reference_frame << std::endl << std::endl;
+    std::cout << "- redball_format: " << output_format_redball_format << std::endl << std::endl;
 
     std::cout << "Pose:" << std::endl;
 
@@ -396,6 +399,12 @@ Tracker::Tracker(const ResourceFinder& rf)
         filter_->set_probe("output_velocity", std::move(probe));
     }
 
+    if (output_format_redball_format)
+    {
+        auto probe = std::make_unique<ProbeRedball>("/" + log_name_ + "/probe/pose:o");
+        filter_->set_probe("output_pose", std::move(probe));
+    }
+    else
     {
         auto probe = std::make_unique<YarpVectorOfProbe<double, Eigen::VectorXd>>("/" + log_name_ + "/probe/pose:o");
         filter_->set_probe("output_pose", std::move(probe));
