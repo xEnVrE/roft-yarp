@@ -121,10 +121,6 @@ Tracker::Tracker(const ResourceFinder& rf)
 
     const Bottle rf_output_format = rf.findGroup("OUTPUT_FORMAT");
     const std::string output_format_reference_frame = rf_output_format.check("reference_frame", Value("camera")).asString();
-    const bool output_format_redball_format = rf_output_format.check("redball_format", Value(false)).asBool();
-    const bool output_format_redball_limits = rf_output_format.check("redball_limits", Value(true)).asBool();
-    const double output_format_redball_max_x = rf_output_format.check("redball_max_x", Value(-0.15)).asDouble();
-    const double output_format_redball_radius = rf_output_format.check("redball_radius", Value(0.5)).asDouble();
 
     /* Pose .*/
 
@@ -225,10 +221,6 @@ Tracker::Tracker(const ResourceFinder& rf)
     std::cout << "Output format:" << std::endl;
 
     std::cout << "- reference_frame: " << output_format_reference_frame << std::endl << std::endl;
-    std::cout << "- redball_format: " << output_format_redball_format << std::endl;
-    std::cout << "- redball_limits: " << output_format_redball_limits << std::endl;
-    std::cout << "- redball_max_x: " << output_format_redball_max_x << std::endl;
-    std::cout << "- redball_radius: " << output_format_redball_radius << std::endl << std::endl;
 
     std::cout << "Pose:" << std::endl;
 
@@ -405,15 +397,6 @@ Tracker::Tracker(const ResourceFinder& rf)
         filter_->set_probe("output_velocity", std::move(probe));
     }
 
-    if (output_format_redball_format)
-    {
-        if (output_format_redball_limits)
-            auto probe = std::make_unique<ProbeRedball>("/" + log_name_ + "/probe/pose:o", output_format_redball_max_x, output_format_redball_radius);
-        else
-            auto probe = std::make_unique<ProbeRedball>("/" + log_name_ + "/probe/pose:o");
-        filter_->set_probe("output_pose", std::move(probe));
-    }
-    else
     {
         auto probe = std::make_unique<YarpVectorOfProbe<double, Eigen::VectorXd>>("/" + log_name_ + "/probe/pose:o");
         filter_->set_probe("output_pose", std::move(probe));
