@@ -14,7 +14,6 @@
 #include <yarp/sig/Image.h>
 
 #include <OTL/CameraMeasurement.h>
-#include <OTL/ModelParameters.h>
 #include <OTL/ImageOpticalFlowSource.h>
 #include <OTL/ImageOpticalFlowNVOF.h>
 
@@ -104,7 +103,8 @@ Tracker::Tracker(const ResourceFinder& rf)
     const bool model_use_internal_db = rf_model.check("use_internal_db", Value(true)).asBool();
     const std::string model_internal_db_name = rf_model.check("internal_db_name", Value("YCBVideo")).asString();
     const std::string model_external_path = rf_model.check("external_path", Value("")).asString();
-    const std::string textured_model_external_path = rf_model.check("textured_mesh_path", Value("")).asString() + "/" + model_name + "/textured.obj";
+    textured_model_external_path_root_ = rf_model.check("textured_mesh_path", Value("")).asString();
+    const std::string textured_model_external_path = textured_model_external_path_root_ + "/" + model_name + "/textured.obj";
 
     /* Optical flow. */
 
@@ -280,12 +280,11 @@ Tracker::Tracker(const ResourceFinder& rf)
     VectorXd v_measurement_covariance = v_meas_cov_flow;
 
     /* Object model. */
-    ModelParameters model_parameters;
-    model_parameters.name(model_name);
-    model_parameters.use_internal_db(model_use_internal_db);
-    model_parameters.internal_db_name(model_internal_db_name);
-    model_parameters.mesh_external_path(model_external_path);
-    model_parameters.textured_mesh_external_path(textured_model_external_path);
+    model_parameters_.name(model_name);
+    model_parameters_.use_internal_db(model_use_internal_db);
+    model_parameters_.internal_db_name(model_internal_db_name);
+    model_parameters_.mesh_external_path(model_external_path);
+    model_parameters_.textured_mesh_external_path(textured_model_external_path);
 
     /* Output format. */
     bool yarp_camera_enable_camera_pose;
@@ -349,7 +348,7 @@ Tracker::Tracker(const ResourceFinder& rf)
         /* Sources. */
         camera, segmentation, flow, pose,
         /* Object model. */
-        model_parameters,
+        model_parameters_,
         /* Initial pose and covariance. */
         p_initial_condition, p_initial_covariance, p_model_covariance, p_measurement_covariance,
         /* Initial velocity and covariance. */
@@ -434,7 +433,16 @@ std::string Tracker::reset()
 
 std::string Tracker::select_object(const std::string& object_name)
 {
-    return "To be impemented.";
+    model_parameters_.name(object_name);
+    model_parameters_.textured_mesh_external_path(textured_model_external_path_root_ + "/" + object_name + "/textured.obj");
+
+    /* Set the new model parameters. */
+    filter_->set_model_parameters(model_parameters_);
+
+    /* Force reset of the filter. */
+    reset();
+
+    return "Command accepted.";
 }
 
 

@@ -11,6 +11,7 @@
 #include <Eigen/Dense>
 
 #include <OTL/OFAidedFilterOnline.h>
+#include <OTL/ModelParameters.h>
 
 #include <thrift/TrackerIDL.h>
 
@@ -46,6 +47,10 @@ private:
     std::unique_ptr<OTL::OFAidedFilterOnline> filter_;
 
     yarp::os::Port port_rpc_;
+
+    std::string textured_model_external_path_root_;
+
+    OTL::ModelParameters model_parameters_;
 
     const std::string log_name_ = "roft-tracker";
 };
