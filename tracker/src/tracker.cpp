@@ -439,9 +439,6 @@ std::string Tracker::select_object(const std::string& object_name)
     /* Set the new model parameters. */
     filter_->set_model_parameters(model_parameters_);
 
-    /* Force reset of the filter. */
-    reset();
-
     return "Command accepted.";
 }
 
