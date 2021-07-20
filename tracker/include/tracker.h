@@ -8,14 +8,17 @@
 #ifndef TRACKER_H
 #define TRACKER_H
 
+#include <Eigen/Dense>
+
+#include <OTL/OFAidedFilterOnline.h>
+
 #include <thrift/TrackerIDL.h>
 
 #include <yarp/os/Bottle.h>
 #include <yarp/os/ResourceFinder.h>
+#include <yarp/os/Port.h>
 
-#include <Eigen/Dense>
-
-#include <OTL/OFAidedFilterOnline.h>
+#include <string>
 
 
 class Tracker : public TrackerIDL
@@ -27,12 +30,22 @@ public:
      * IDL interface.
      */
 
-    void foo() override;
+    std::string quit() override;
+
+    std::string reset() override;
+
+    std::string select_object(const std::string& object_name) override;
+
+    std::string start() override;
+
+    std::string stop() override;
 
 private:
     Eigen::VectorXd load_vector_double(const yarp::os::Bottle& resource, const std::string& key, const std::size_t size);
 
     std::unique_ptr<OTL::OFAidedFilterOnline> filter_;
+
+    yarp::os::Port port_rpc_;
 
     const std::string log_name_ = "roft-tracker";
 };

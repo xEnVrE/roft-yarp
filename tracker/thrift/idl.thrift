@@ -7,5 +7,13 @@
 
 service TrackerIDL
 {
-    void foo();
+    string quit();
+
+    string reset();
+
+    string select_object(1:string object_name);
+
+    string start();
+
+    string stop();
 }

@@ -402,6 +402,13 @@ Tracker::Tracker(const ResourceFinder& rf)
         filter_->set_probe("output_pose", std::move(probe));
     }
 
+    /* Open RPC port and attach to respond handler. */
+    if (!port_rpc_.open("/" + log_name_ + "/rpc:i"))
+        throw(std::runtime_error(log_name_ + "::ctor. Error: cannot open input RPC port"));
+    if (!(this->yarp().attachAsServer(port_rpc_)))
+        throw(std::runtime_error(log_name_ + "::ctor. Error: cannot attach RPC port to the respond handler"));
+
+    /* Boot the filter. */
     filter_->boot();
     filter_->run();
     if (!filter_->wait())
@@ -409,9 +416,41 @@ Tracker::Tracker(const ResourceFinder& rf)
 }
 
 
-void Tracker::foo()
+std::string Tracker::quit()
 {
+    filter_->teardown();
 
+    return "Command accepted.";
+}
+
+
+std::string Tracker::reset()
+{
+    filter_->reset();
+
+    return "Command accepted.";
+}
+
+
+std::string Tracker::select_object(const std::string& object_name)
+{
+    return "To be impemented.";
+}
+
+
+std::string Tracker::start()
+{
+    filter_->run();
+
+    return "Command accepted.";
+}
+
+
+std::string Tracker::stop()
+{
+    filter_->reboot();
+
+    return "Command accepted.";
 }
 
 
