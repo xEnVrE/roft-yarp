@@ -1,0 +1,27 @@
+<application>
+    <name>ROFT Track and Grasp</name>
+
+    <module>
+        <name>roft-track-n-grasp</name>
+        <node>localhost</node>
+    </module>
+
+    <connection>
+        <from>/roft-track-n-grasp/segmentation/rpc:o</from>
+        <to>/detectron2/rpc:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/roft-track-n-grasp/pose/rpc:o</from>
+        <to>/dope/rpc:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/roft-track-n-grasp/tracker/rpc:o</from>
+        <to>/roft-tracker/rpc:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
+</application>
