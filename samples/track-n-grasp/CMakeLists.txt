@@ -11,7 +11,9 @@ set(EXE_TARGET_NAME roft-track-n-grasp)
 
 # YARP
 find_package(YARP REQUIRED COMPONENTS
+                           dev
                            os
+                           sig
 )
 
 # find_package(ICUB REQUIRED COMPONENTS
@@ -35,8 +37,10 @@ yarp_add_idl(${EXE_TARGET_NAME}_THRIFT_SRC ${${EXE_TARGET_NAME}_THRIFT_HDR})
 # Executable
 add_executable(${EXE_TARGET_NAME}
                include/module.h
+               include/iCubGaze.h
                src/main.cpp
                src/module.cpp
+               src/iCubGaze.cpp
                ${${EXE_TARGET_NAME}_THRIFT_SRC}
 )
 
@@ -46,8 +50,10 @@ target_link_libraries(${EXE_TARGET_NAME} PRIVATE
                                          # Eigen3::Eigen
                                          # OTL::OTL
                                          # RobotsIO::RobotsIO
-                                         YARP::YARP_os
+                                         YARP::YARP_dev
                                          YARP::YARP_init
+                                         YARP::YARP_os
+                                         YARP::YARP_sig
 )
 
 install(TARGETS ${EXE_TARGET_NAME} DESTINATION bin)

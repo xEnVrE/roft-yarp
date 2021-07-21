@@ -19,6 +19,9 @@ using namespace yarp::os;
 
 bool Module::configure(yarp::os::ResourceFinder& rf)
 {
+    /* Get parameters. */
+    const std::string robot = rf.check("robot", Value("icub")).asString();
+
     /* Open RPC port and attach to respond handler. */
     if (!port_rpc_.open("/" + log_name_ + "/rpc:i"))
     {
@@ -59,6 +62,9 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     objects_map_["o004"] = "004_sugar_box";
     objects_map_["o006"] = "006_mustard_bottle";
 
+    /* Configure iCub gaze controller. */
+    gaze_ = std::make_unique<iCubGaze>(robot, log_name_);
+
     return true;
 }
 
@@ -69,6 +75,7 @@ bool Module::close()
     port_rpc_segm_.close();
     port_rpc_pose_est_.close();
     port_rpc_trk_.close();
+    gaze_->close();
 
     return true;
 }

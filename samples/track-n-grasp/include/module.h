@@ -8,6 +8,8 @@
 #ifndef MODULE_H
 #define MODULE_H
 
+#include <iCubGaze.h>
+
 #include <thrift/ModuleIDL.h>
 
 #include <yarp/os/Port.h>
@@ -52,6 +54,9 @@ private:
 
     /* Objects map. */
     std::unordered_map<std::string, std::string> objects_map_;
+
+    /* iCub gaze controller. */
+    std::unique_ptr<iCubGaze> gaze_;
 
     /* Log name for messages. */
     const std::string log_name_ = "roft-track-n-grasp";
