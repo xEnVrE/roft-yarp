@@ -21,10 +21,7 @@ find_package(YARP REQUIRED COMPONENTS
 # )
 
 # Eigen
-# find_package(Eigen3 REQUIRED)
-
-# Robots I/O facilities
-# find_package(RobotsIO REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # Object Tracking library
 find_package(OTL REQUIRED)
@@ -47,9 +44,7 @@ add_executable(${EXE_TARGET_NAME}
 target_include_directories(${EXE_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_link_libraries(${EXE_TARGET_NAME} PRIVATE
-                                         # Eigen3::Eigen
-                                         # OTL::OTL
-                                         # RobotsIO::RobotsIO
+                                         Eigen3::Eigen
                                          YARP::YARP_dev
                                          YARP::YARP_init
                                          YARP::YARP_os

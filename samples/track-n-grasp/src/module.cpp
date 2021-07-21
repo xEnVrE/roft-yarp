@@ -12,15 +12,20 @@
 
 #include <thread>
 
+using namespace Eigen;
 using namespace std::literals::chrono_literals;
 using namespace yarp::os;
-
+using namespace yarp::sig;
+using Pose = Eigen::Transform<double, 3, Eigen::Affine>;
 
 
 bool Module::configure(yarp::os::ResourceFinder& rf)
 {
     /* Get parameters. */
     const std::string robot = rf.check("robot", Value("icub")).asString();
+
+    const Bottle rf_object_pose_input = rf.findGroup("OBJECT_POSE_INPUT");
+    is_pose_input_buffered_ = rf_object_pose_input.check("buffered", Value(true)).asBool();
 
     /* Open RPC port and attach to respond handler. */
     if (!port_rpc_.open("/" + log_name_ + "/rpc:i"))
@@ -57,6 +62,14 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
+    /* Open port for object pose. */
+    if (!port_pose_.open("/" + log_name_ + "/tracker/pose:i"))
+    {
+        yError() << log_name_ + "::ctor. Error: cannot open port for object pose.";
+
+        return false;
+    }
+
     /* Objects maps. */
     objects_map_["o003"] = "003_cracker_box";
     objects_map_["o004"] = "004_sugar_box";
@@ -89,6 +102,10 @@ double Module::getPeriod()
 
 bool Module::updateModule()
 {
+    bool valid_pose;
+    Pose object_pose;
+    std::tie(valid_pose, object_pose) = get_object_pose();
+
     return true;
 }
 
@@ -135,6 +152,36 @@ std::string Module::select_object(const std::string& object_name)
     send_rpc(port_rpc_trk_, {"start"});
 
     return "Command accepted";
+}
+
+
+std::pair<bool, Pose> Module::get_object_pose()
+{
+    Vector* pose_yarp = port_pose_.read(is_pose_input_buffered_);
+
+    auto yarp_to_transform = [](const Vector& vector) -> Pose
+    {
+        Pose pose;
+        pose = Translation<double, 3>(vector[0], vector[1], vector[2]);
+        pose.rotate(AngleAxisd(vector[6], Vector3d(vector[3], vector[4], vector[5])));
+
+        return pose;
+    };
+
+    if (pose_yarp == nullptr)
+    {
+        if(is_pose_input_buffered_ && is_first_pose_)
+            return std::make_pair(true, last_object_pose_);
+        else
+            return std::make_pair(false, Pose::Identity());
+    }
+    else
+    {
+        last_object_pose_ = yarp_to_transform(*pose_yarp);
+        is_first_pose_ = true;
+
+        return std::make_pair(true, last_object_pose_);
+    }
 }
 
 
