@@ -159,9 +159,9 @@ bool Module::updateModule()
             if (is_pose_gaze_safe())
             {
                 Vector target(3);
-                target(0) = last_object_pose_.translation()(0);
-                target(1) = last_object_pose_.translation()(1);
-                target(2) = last_object_pose_.translation()(2);
+                target(0) = pose.translation()(0);
+                target(1) = pose.translation()(1);
+                target(2) = pose.translation()(2);
                 gaze_->look_at_stream(target);
             }
         }
