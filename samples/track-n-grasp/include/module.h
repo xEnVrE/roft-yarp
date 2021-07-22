@@ -49,7 +49,7 @@ private:
      */
     std::tuple<bool, Eigen::Transform<double, 3, Eigen::Affine>, Eigen::Vector3d> get_object_state();
 
-    bool is_pose_gaze_safe();
+    bool is_pose_gaze_safe(const Eigen::Transform<double, 3, Eigen::Affine>& pose);
 
     /**
      * Get/set reception time and elapsed time.

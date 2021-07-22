@@ -157,7 +157,7 @@ bool Module::updateModule()
         else
         {
             /* Track object with gaze. */
-            if (is_pose_gaze_safe())
+            if (is_pose_gaze_safe(pose))
             {
                 Vector target(3);
                 target(0) = pose.translation()(0);
@@ -256,11 +256,11 @@ std::tuple<bool, Eigen::Transform<double, 3, Eigen::Affine>, Vector3d> Module::g
 }
 
 
-bool Module::is_pose_gaze_safe()
+bool Module::is_pose_gaze_safe(const Pose& pose)
 {
-    const double& x = last_object_pose_.translation()(0);
-    const double& y = last_object_pose_.translation()(1);
-    const double& z = last_object_pose_.translation()(2);
+    const double& x = pose.translation()(0);
+    const double& y = pose.translation()(1);
+    const double& z = pose.translation()(2);
 
     if (enable_gaze_limit_x_ && (abs(x) > gaze_limit_x_))
         return false;
