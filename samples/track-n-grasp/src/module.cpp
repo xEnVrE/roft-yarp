@@ -161,7 +161,7 @@ bool Module::updateModule()
         else
         {
             /* Track object with gaze. */
-            if (is_pose_gaze_safe(pose))
+            if (valid_pose && is_pose_gaze_safe(pose))
             {
                 Vector target(3);
                 target(0) = pose.translation()(0);
