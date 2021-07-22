@@ -86,6 +86,11 @@ private:
     bool is_first_pose_;
 
     /**
+     * Parameters.
+     */
+    int frequency_;
+
+    /**
      * Name for log messages.
      */
     const std::string log_name_ = "roft-track-n-grasp";

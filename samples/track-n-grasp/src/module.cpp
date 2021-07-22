@@ -23,6 +23,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
 {
     /* Get parameters. */
     const std::string robot = rf.check("robot", Value("icub")).asString();
+    frequency_ = rf.check("frequency", Value(30)).asInt();
 
     const Bottle rf_object_pose_input = rf.findGroup("OBJECT_POSE_INPUT");
     is_pose_input_buffered_ = rf_object_pose_input.check("buffered", Value(true)).asBool();
@@ -96,7 +97,7 @@ bool Module::close()
 
 double Module::getPeriod()
 {
-    return (1.0 / 30.0);
+    return (1.0 / frequency_);
 }
 
 
