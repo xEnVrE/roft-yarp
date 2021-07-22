@@ -68,7 +68,14 @@ bool iCubGaze::look_at_stream(const Vector& target)
 
 bool iCubGaze::go_home()
 {
+    int current_context;
+
+    gaze_->storeContext(&current_context);
+    gaze_->setNeckTrajTime(3.0);
+
     look_at(home_configuration_);
+
+    gaze_->restoreContext(current_context);
 
     return true;
 }
