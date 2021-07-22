@@ -25,6 +25,14 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     const std::string robot = rf.check("robot", Value("icub")).asString();
     frequency_ = rf.check("frequency", Value(30)).asInt();
 
+    const Bottle rf_gaze_limits = rf.findGroup("GAZE_LIMITS");
+    enable_gaze_limit_x_ = rf_gaze_limits.check("enable_limit_x", Value(true)).asBool();
+    enable_gaze_limit_y_ = rf_gaze_limits.check("enable_limit_y", Value(false)).asBool();
+    enable_gaze_limit_z_ = rf_gaze_limits.check("enable_limit_z", Value(false)).asBool();
+    gaze_limit_x_ = rf_gaze_limits.check("limit_x", Value(0.9)).asDouble();
+    gaze_limit_y_ = rf_gaze_limits.check("limit_y", Value(0.0)).asDouble();
+    gaze_limit_z_ = rf_gaze_limits.check("limit_z", Value(0.0)).asDouble();
+
     /* Open RPC port and attach to respond handler. */
     if (!port_rpc_.open("/" + log_name_ + "/rpc:i"))
     {
@@ -148,11 +156,14 @@ bool Module::updateModule()
         else
         {
             /* Track object with gaze. */
-            Vector target(3);
-            target(0) = last_object_pose_.translation()(0);
-            target(1) = last_object_pose_.translation()(1);
-            target(2) = last_object_pose_.translation()(2);
-            gaze_->look_at_stream(target);
+            if (is_pose_gaze_safe())
+            {
+                Vector target(3);
+                target(0) = last_object_pose_.translation()(0);
+                target(1) = last_object_pose_.translation()(1);
+                target(2) = last_object_pose_.translation()(2);
+                gaze_->look_at_stream(target);
+            }
         }
     }
 
@@ -233,6 +244,25 @@ std::pair<bool, Eigen::Transform<double, 3, Eigen::Affine>> Module::get_object_p
 
         return std::make_pair(true, last_object_pose_);
     }
+}
+
+
+bool Module::is_pose_gaze_safe()
+{
+    const double& x = last_object_pose_.translation()(0);
+    const double& y = last_object_pose_.translation()(1);
+    const double& z = last_object_pose_.translation()(2);
+
+    if (enable_gaze_limit_x_ && (abs(x) > gaze_limit_x_))
+        return false;
+
+    if (enable_gaze_limit_y_ && (abs(y) > gaze_limit_y_))
+        return false;
+
+    if (enable_gaze_limit_z_ && (abs(z) > gaze_limit_z_))
+        return false;
+
+    return true;
 }
 
 

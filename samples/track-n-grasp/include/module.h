@@ -45,9 +45,11 @@ public:
 
 private:
     /**
-     * Get object pose.
+     * Get object pose and validation.
      */
     std::pair<bool, Eigen::Transform<double, 3, Eigen::Affine>> get_object_pose();
+
+    bool is_pose_gaze_safe();
 
     /**
      * Get/set reception time and elapsed time.
@@ -81,6 +83,14 @@ private:
      * iCub gaze controller.
      */
     std::unique_ptr<iCubGaze> gaze_;
+
+    bool enable_gaze_limit_x_;
+    bool enable_gaze_limit_y_;
+    bool enable_gaze_limit_z_;
+
+    double gaze_limit_x_;
+    double gaze_limit_y_;
+    double gaze_limit_z_;
 
     /**
      * Object pose input.
