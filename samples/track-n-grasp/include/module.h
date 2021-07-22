@@ -66,22 +66,6 @@ private:
     bool send_rpc(const yarp::os::RpcClient& port, std::vector<std::string> messages);
 
     /**
-     * RPC ports.
-     */
-    yarp::os::Port port_rpc_;
-
-    yarp::os::RpcClient port_rpc_segm_;
-
-    yarp::os::RpcClient port_rpc_pose_est_;
-
-    yarp::os::RpcClient port_rpc_trk_;
-
-    /**
-     * Objects short name to long name mapping.
-     */
-    std::unordered_map<std::string, std::string> objects_map_;
-
-    /**
      * iCub gaze controller.
      */
     std::unique_ptr<iCubGaze> gaze_;
@@ -93,6 +77,11 @@ private:
     double gaze_limit_x_;
     double gaze_limit_y_;
     double gaze_limit_z_;
+
+    /**
+     * Objects short name to long name mapping.
+     */
+    std::unordered_map<std::string, std::string> objects_map_;
 
     /**
      * Object pose input.
@@ -130,6 +119,17 @@ private:
     double obj_ss_time_thr_;
 
     std::chrono::steady_clock::time_point obj_ss_start_time_;
+
+    /**
+     * RPC ports.
+     */
+    yarp::os::Port port_rpc_;
+
+    yarp::os::RpcClient port_rpc_segm_;
+
+    yarp::os::RpcClient port_rpc_pose_est_;
+
+    yarp::os::RpcClient port_rpc_trk_;
 
     /**
      * Parameters.
