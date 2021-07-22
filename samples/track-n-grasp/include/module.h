@@ -116,7 +116,7 @@ private:
     /**
      * Module state.
      */
-    enum class State { Idle, WaitForFeedback, Tracking };
+    enum class State { Idle, WaitForFeedback, GoHome, Tracking };
 
     State state_ = State::Idle;
 

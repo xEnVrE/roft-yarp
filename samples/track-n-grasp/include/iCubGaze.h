@@ -25,6 +25,8 @@ public:
 
     bool look_at_stream(const yarp::sig::Vector& target);
 
+    bool go_home();
+
     bool stop();
 
 private:
@@ -36,6 +38,8 @@ private:
     yarp::dev::IGazeControl* gaze_;
 
     int gaze_startup_context_;
+
+    yarp::sig::Vector home_configuration_;
 
     /* Log name for messages. */
     const std::string log_name_ = "iCubGaze";

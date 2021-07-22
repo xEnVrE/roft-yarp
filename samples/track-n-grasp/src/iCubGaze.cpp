@@ -38,6 +38,12 @@ iCubGaze::iCubGaze(const std::string& robot_name, const std::string& port_prefix
     /* Set trajectory times. */
     gaze_->setNeckTrajTime(0.7);
     gaze_->setEyesTrajTime(0.5);
+
+    /* Set home configuration. */
+    home_configuration_.resize(3);
+    home_configuration_(0) = -1.0;
+    home_configuration_(1) = 0.0;
+    home_configuration_(2) = 0.3;
 }
 
 
@@ -57,6 +63,21 @@ bool iCubGaze::look_at(const Vector& target)
 bool iCubGaze::look_at_stream(const Vector& target)
 {
     return gaze_->lookAtFixationPoint(target);
+}
+
+
+bool iCubGaze::go_home()
+{
+    int actual_context;
+    gaze_->storeContext(&actual_context);
+
+    gaze_->setNeckTrajTime(3.0);
+
+    look_at(home_configuration_);
+
+    gaze_->restoreContext(actual_context);
+
+    return true;
 }
 
 

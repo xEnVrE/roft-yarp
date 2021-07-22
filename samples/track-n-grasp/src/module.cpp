@@ -86,6 +86,8 @@ bool Module::close()
     port_rpc_segm_.close();
     port_rpc_pose_est_.close();
     port_rpc_trk_.close();
+
+    gaze_->go_home();
     gaze_->close();
 
     return true;
@@ -114,6 +116,9 @@ bool Module::updateModule()
 
     if (state_ == State::Idle)
     {
+        /* Restore idle gaze configuration. */
+        gaze_->go_home();
+
         yInfo() << "[Idle -> WaitForFeedback]";
         state_ = State::WaitForFeedback;
     }
@@ -125,12 +130,29 @@ bool Module::updateModule()
             state_ = State::Tracking;
         }
     }
+    else if (state_ == State::GoHome)
+    {
+        /* Restore idle gaze configuration. */
+        gaze_->go_home();
+
+        yInfo() << "[GoHome -> WaitForFeedback]";
+        state_ = State::WaitForFeedback;
+    }
     else if (state_ == State::Tracking)
     {
         if (elapsed > feedback_wait_threshold_)
         {
-            yInfo() << "[Tracking -> WaitForFeedback]";
-            state_ = State::WaitForFeedback;
+            yInfo() << "[Tracking -> GoHome]";
+            state_ = State::GoHome;
+        }
+        else
+        {
+            /* Track object with gaze. */
+            Vector target(3);
+            target(0) = last_object_pose_.translation()(0);
+            target(1) = last_object_pose_.translation()(1);
+            target(2) = last_object_pose_.translation()(2);
+            gaze_->look_at_stream(target);
         }
     }
 
