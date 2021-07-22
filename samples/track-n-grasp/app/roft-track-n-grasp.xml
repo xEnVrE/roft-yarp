@@ -24,4 +24,10 @@
         <protocol>fast_tcp</protocol>
     </connection>
 
+    <connection>
+        <from>/roft-tracker/probe/pose:o</from>
+        <to>/roft-track-n-grasp/tracker/pose:i</to>
+        <protocol>fast_tcp</protocol>
+    </connection>
+
 </application>
