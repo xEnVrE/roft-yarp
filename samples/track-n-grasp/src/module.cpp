@@ -100,16 +100,39 @@ double Module::getPeriod()
 
 bool Module::updateModule()
 {
-    bool valid_pose;
-    Pose object_pose;
-    std::tie(valid_pose, object_pose) = get_object_pose();
-
-    if (!valid_pose)
-        return true;
-
+    /* Elapsed time from last received valid pose. */
     double elapsed = get_rx_elapsed_time();
 
-    yInfo() << elapsed;
+    /* Get last pose if available. */
+    bool valid_pose;
+    Pose pose;
+    std::tie(valid_pose, pose) = get_object_pose();
+
+    /* Update reception time. */
+    if (valid_pose)
+        set_rx_time();
+
+    if (state_ == State::Idle)
+    {
+        yInfo() << "[Idle -> WaitForFeedback]";
+        state_ = State::WaitForFeedback;
+    }
+    else if (state_ == State::WaitForFeedback)
+    {
+        if (elapsed < feedback_wait_threshold_)
+        {
+            yInfo() << "[WaitForFeedback -> Tracking]";
+            state_ = State::Tracking;
+        }
+    }
+    else if (state_ == State::Tracking)
+    {
+        if (elapsed > feedback_wait_threshold_)
+        {
+            yInfo() << "[Tracking -> WaitForFeedback]";
+            state_ = State::WaitForFeedback;
+        }
+    }
 
     return true;
 }
@@ -160,7 +183,7 @@ std::string Module::select_object(const std::string& object_name)
 }
 
 
-std::pair<bool, Pose> Module::get_object_pose()
+std::pair<bool, Eigen::Transform<double, 3, Eigen::Affine>> Module::get_object_pose()
 {
     Vector* pose_yarp = port_pose_.read(is_pose_input_buffered_);
 
@@ -183,6 +206,7 @@ std::pair<bool, Pose> Module::get_object_pose()
     else
     {
         last_object_pose_ = yarp_to_transform(*pose_yarp);
+
         is_first_pose_ = true;
 
         return std::make_pair(true, last_object_pose_);
@@ -196,8 +220,10 @@ double Module::get_rx_elapsed_time()
 
     if (is_first_time_)
     {
-        is_first_time_ = false;
         input_delta_rx_ = 1000.0;
+        last_rx_time_ = now;
+
+        is_first_time_ = false;
     }
     else
     {
@@ -205,9 +231,16 @@ double Module::get_rx_elapsed_time()
         input_delta_rx_ = alpha_ema_ * delta + (1 - alpha_ema_) * input_delta_rx_;
     }
 
-    last_rx_time_ = now;
+    if (input_delta_rx_ > input_delta_rx_max_)
+        input_delta_rx_ = input_delta_rx_max_;
 
     return input_delta_rx_;
+}
+
+
+void Module::set_rx_time()
+{
+    last_rx_time_ = std::chrono::steady_clock::now();
 }
 
 

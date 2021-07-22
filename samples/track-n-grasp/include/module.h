@@ -50,9 +50,11 @@ private:
     std::pair<bool, Eigen::Transform<double, 3, Eigen::Affine>> get_object_pose();
 
     /**
-     * Get reception elapsed time.
+     * Get/set reception time and elapsed time.
      */
     double get_rx_elapsed_time();
+
+    void set_rx_time();
 
     /**
      * Send an RPC message.
@@ -98,6 +100,8 @@ private:
 
     double input_delta_rx_;
 
+    const double input_delta_rx_max_ = 5000;
+
     std::chrono::steady_clock::time_point last_rx_time_;
 
     bool is_first_time_ = true;
@@ -106,6 +110,15 @@ private:
      * Parameters.
      */
     int frequency_;
+
+    const double feedback_wait_threshold_ = 40.0;
+
+    /**
+     * Module state.
+     */
+    enum class State { Idle, WaitForFeedback, Tracking };
+
+    State state_ = State::Idle;
 
     /**
      * Name for log messages.
