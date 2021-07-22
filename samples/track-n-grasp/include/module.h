@@ -20,6 +20,7 @@
 #include <yarp/os/RFModule.h>
 #include <yarp/sig/Vector.h>
 
+#include <chrono>
 #include <string>
 #include <unordered_map>
 
@@ -47,6 +48,11 @@ private:
      * Get object pose.
      */
     std::pair<bool, Eigen::Transform<double, 3, Eigen::Affine>> get_object_pose();
+
+    /**
+     * Get reception elapsed time.
+     */
+    double get_rx_elapsed_time();
 
     /**
      * Send an RPC message.
@@ -81,9 +87,20 @@ private:
 
     Eigen::Transform<double, 3, Eigen::Affine> last_object_pose_;
 
-    bool is_pose_input_buffered_;
+    const bool is_pose_input_buffered_ = false;
 
-    bool is_first_pose_;
+    bool is_first_pose_ = false;
+
+    /**
+     * Object input reception time.
+     */
+    double alpha_ema_ = 0.1;
+
+    double input_delta_rx_;
+
+    std::chrono::steady_clock::time_point last_rx_time_;
+
+    bool is_first_time_ = true;
 
     /**
      * Parameters.

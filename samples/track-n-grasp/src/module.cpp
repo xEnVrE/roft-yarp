@@ -25,9 +25,6 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     const std::string robot = rf.check("robot", Value("icub")).asString();
     frequency_ = rf.check("frequency", Value(30)).asInt();
 
-    const Bottle rf_object_pose_input = rf.findGroup("OBJECT_POSE_INPUT");
-    is_pose_input_buffered_ = rf_object_pose_input.check("buffered", Value(true)).asBool();
-
     /* Open RPC port and attach to respond handler. */
     if (!port_rpc_.open("/" + log_name_ + "/rpc:i"))
     {
@@ -107,6 +104,13 @@ bool Module::updateModule()
     Pose object_pose;
     std::tie(valid_pose, object_pose) = get_object_pose();
 
+    if (!valid_pose)
+        return true;
+
+    double elapsed = get_rx_elapsed_time();
+
+    yInfo() << elapsed;
+
     return true;
 }
 
@@ -183,6 +187,27 @@ std::pair<bool, Pose> Module::get_object_pose()
 
         return std::make_pair(true, last_object_pose_);
     }
+}
+
+
+double Module::get_rx_elapsed_time()
+{
+    auto now = std::chrono::steady_clock::now();
+
+    if (is_first_time_)
+    {
+        is_first_time_ = false;
+        input_delta_rx_ = 1000.0;
+    }
+    else
+    {
+        double delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_rx_time_).count();
+        input_delta_rx_ = alpha_ema_ * delta + (1 - alpha_ema_) * input_delta_rx_;
+    }
+
+    last_rx_time_ = now;
+
+    return input_delta_rx_;
 }
 
 
