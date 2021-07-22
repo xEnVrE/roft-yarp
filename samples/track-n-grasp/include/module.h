@@ -45,9 +45,9 @@ public:
 
 private:
     /**
-     * Get object pose and validation.
+     * Get object state and validation.
      */
-    std::pair<bool, Eigen::Transform<double, 3, Eigen::Affine>> get_object_pose();
+    std::tuple<bool, Eigen::Transform<double, 3, Eigen::Affine>, Eigen::Vector3d> get_object_state();
 
     bool is_pose_gaze_safe();
 
@@ -95,13 +95,15 @@ private:
     /**
      * Object pose input.
      */
-    yarp::os::BufferedPort<yarp::sig::Vector> port_pose_;
+    yarp::os::BufferedPort<yarp::sig::Vector> port_state_;
 
     Eigen::Transform<double, 3, Eigen::Affine> last_object_pose_;
 
+    Eigen::Vector3d last_object_velocity_;
+
     const bool is_pose_input_buffered_ = false;
 
-    bool is_first_pose_ = false;
+    bool is_first_state_ = false;
 
     /**
      * Object input reception time.

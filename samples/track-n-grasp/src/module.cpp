@@ -68,10 +68,10 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
-    /* Open port for object pose. */
-    if (!port_pose_.open("/" + log_name_ + "/tracker/pose:i"))
+    /* Open port for object state. */
+    if (!port_state_.open("/" + log_name_ + "/tracker/state:i"))
     {
-        yError() << log_name_ + "::ctor. Error: cannot open port for object pose.";
+        yError() << log_name_ + "::ctor. Error: cannot open port for object state.";
 
         return false;
     }
@@ -116,7 +116,8 @@ bool Module::updateModule()
     /* Get last pose if available. */
     bool valid_pose;
     Pose pose;
-    std::tie(valid_pose, pose) = get_object_pose();
+    Vector3d velocity;
+    std::tie(valid_pose, pose, velocity) = get_object_state();
 
     /* Update reception time. */
     if (valid_pose)
@@ -216,9 +217,9 @@ std::string Module::select_object(const std::string& object_name)
 }
 
 
-std::pair<bool, Eigen::Transform<double, 3, Eigen::Affine>> Module::get_object_pose()
+std::tuple<bool, Eigen::Transform<double, 3, Eigen::Affine>, Vector3d> Module::get_object_state()
 {
-    Vector* pose_yarp = port_pose_.read(is_pose_input_buffered_);
+    Vector* state_yarp = port_state_.read(is_pose_input_buffered_);
 
     auto yarp_to_transform = [](const Vector& vector) -> Pose
     {
@@ -229,20 +230,28 @@ std::pair<bool, Eigen::Transform<double, 3, Eigen::Affine>> Module::get_object_p
         return pose;
     };
 
-    if (pose_yarp == nullptr)
+    auto yarp_to_velocity = [](const Vector& vector) -> Vector3d
     {
-        if(is_pose_input_buffered_ && is_first_pose_)
-            return std::make_pair(true, last_object_pose_);
+        Vector3d velocity(vector[7], vector[8], vector[9]);
+
+        return velocity;
+    };
+
+    if (state_yarp == nullptr)
+    {
+        if(is_pose_input_buffered_ && is_first_state_)
+            return std::make_tuple(true, last_object_pose_, last_object_velocity_);
         else
-            return std::make_pair(false, Pose::Identity());
+            return std::make_tuple(false, Pose::Identity(), Vector3d::Zero());
     }
     else
     {
-        last_object_pose_ = yarp_to_transform(*pose_yarp);
+        last_object_pose_ = yarp_to_transform(*state_yarp);
+        last_object_velocity_ = yarp_to_velocity(*state_yarp);
 
-        is_first_pose_ = true;
+        is_first_state_ = true;
 
-        return std::make_pair(true, last_object_pose_);
+        return std::make_tuple(true, last_object_pose_, last_object_velocity_);
     }
 }
 
