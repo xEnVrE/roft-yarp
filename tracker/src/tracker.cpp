@@ -397,8 +397,8 @@ Tracker::Tracker(const ResourceFinder& rf)
     }
 
     {
-        auto probe = std::make_unique<YarpVectorOfProbe<double, Eigen::VectorXd>>("/" + log_name_ + "/probe/pose:o");
-        filter_->set_probe("output_pose", std::move(probe));
+        auto probe = std::make_unique<YarpVectorOfProbe<double, Eigen::VectorXd>>("/" + log_name_ + "/probe/state:o");
+        filter_->set_probe("output_state", std::move(probe));
     }
 
     /* Open RPC port and attach to respond handler. */
