@@ -33,6 +33,10 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     gaze_limit_y_ = rf_gaze_limits.check("limit_y", Value(0.0)).asDouble();
     gaze_limit_z_ = rf_gaze_limits.check("limit_z", Value(0.0)).asDouble();
 
+    const Bottle rf_steady_state_detector = rf.findGroup("STEADY_STATE_DETECTOR");
+    obj_ss_time_thr_ = rf_steady_state_detector.check("time_threshold", Value(4.0)).asDouble();
+    obj_ss_velocity_thr_ = rf_steady_state_detector.check("velocity_threshold", Value(0.05)).asDouble();
+
     /* Open RPC port and attach to respond handler. */
     if (!port_rpc_.open("/" + log_name_ + "/rpc:i"))
     {
@@ -165,8 +169,13 @@ bool Module::updateModule()
                 target(2) = pose.translation()(2);
                 gaze_->look_at_stream(target);
             }
+
+            if (is_object_steady(velocity))
+                yInfo() << "[STEADY!]";
         }
     }
+
+    yInfo() << " ";
 
     return true;
 }
@@ -272,6 +281,33 @@ bool Module::is_pose_gaze_safe(const Pose& pose)
         return false;
 
     return true;
+}
+
+
+bool Module::is_object_steady(const Eigen::Vector3d& velocity)
+{
+    /* Check if object is steady state. */
+    if (velocity.norm() < obj_ss_velocity_thr_)
+    {
+        if (obj_ss_timer_init_)
+        {
+            auto now = std::chrono::steady_clock::now();
+            double elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - obj_ss_start_time_).count();
+
+            if (elapsed > obj_ss_time_thr_)
+                return true;
+        }
+        else
+        {
+            obj_ss_start_time_ = std::chrono::steady_clock::now();
+
+            obj_ss_timer_init_ = true;
+        }
+    }
+    else
+        obj_ss_timer_init_ = false;
+
+    return false;
 }
 
 

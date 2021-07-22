@@ -51,6 +51,8 @@ private:
 
     bool is_pose_gaze_safe(const Eigen::Transform<double, 3, Eigen::Affine>& pose);
 
+    bool is_object_steady(const Eigen::Vector3d& velocity);
+
     /**
      * Get/set reception time and elapsed time.
      */
@@ -117,6 +119,17 @@ private:
     std::chrono::steady_clock::time_point last_rx_time_;
 
     bool is_first_time_ = true;
+
+    /**
+     * Object steady state detector.
+     */
+    bool obj_ss_timer_init_ = false;
+
+    double obj_ss_velocity_thr_;
+
+    double obj_ss_time_thr_;
+
+    std::chrono::steady_clock::time_point obj_ss_start_time_;
 
     /**
      * Parameters.
