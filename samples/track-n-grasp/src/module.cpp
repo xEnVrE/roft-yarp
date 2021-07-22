@@ -35,7 +35,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
 
     const Bottle rf_steady_state_detector = rf.findGroup("STEADY_STATE_DETECTOR");
     obj_ss_time_thr_ = rf_steady_state_detector.check("time_threshold", Value(4.0)).asDouble();
-    obj_ss_velocity_thr_ = rf_steady_state_detector.check("velocity_threshold", Value(0.05)).asDouble();
+    obj_ss_velocity_thr_ = rf_steady_state_detector.check("vel_threshold", Value(0.05)).asDouble();
 
     /* Open RPC port and attach to respond handler. */
     if (!port_rpc_.open("/" + log_name_ + "/rpc:i"))
@@ -175,8 +175,6 @@ bool Module::updateModule()
         }
     }
 
-    yInfo() << " ";
-
     return true;
 }
 
@@ -292,7 +290,7 @@ bool Module::is_object_steady(const Eigen::Vector3d& velocity)
         if (obj_ss_timer_init_)
         {
             auto now = std::chrono::steady_clock::now();
-            double elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - obj_ss_start_time_).count();
+            double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - obj_ss_start_time_).count() / 1000.0;
 
             if (elapsed > obj_ss_time_thr_)
                 return true;
