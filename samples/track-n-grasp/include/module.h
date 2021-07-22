@@ -100,7 +100,7 @@ private:
 
     double input_delta_rx_;
 
-    const double input_delta_rx_max_ = 5000;
+    const double input_delta_rx_max_ = 3000;
 
     std::chrono::steady_clock::time_point last_rx_time_;
 
