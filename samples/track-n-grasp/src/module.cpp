@@ -7,13 +7,16 @@
 
 #include <module.h>
 
+#include <yarp/eigen/Eigen.h>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/LogStream.h>
 
 #include <thread>
 
 using namespace Eigen;
+using namespace Utils;
 using namespace std::literals::chrono_literals;
+using namespace yarp::eigen;
 using namespace yarp::os;
 using namespace yarp::sig;
 using Pose = Eigen::Transform<double, 3, Eigen::Affine>;
@@ -47,6 +50,16 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     grasp_limit_z_lower_ = rf_grasp_limits.check("limit_z_lower", Value(0.0)).asDouble();
     grasp_limit_z_upper_ = rf_grasp_limits.check("limit_z_upper", Value(0.3)).asDouble();
 
+    const Bottle rf_joint_control = rf.findGroup("JOINT_CONTROL");
+    bool is_vector;
+    Vector arm_joint_home_configuration;
+    std::tie(is_vector, arm_joint_home_configuration) = load_vector_double(rf_joint_control, "home_configuration", 7);
+    if (!is_vector)
+    {
+        yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::home_configuration";
+        return false;
+    }
+
     const Bottle rf_parts = rf.findGroup("PARTS");
     bool enable_part_left = rf_parts.check("left", Value(false)).asBool();
     bool enable_part_right = rf_parts.check("right", Value(false)).asBool();
@@ -58,34 +71,34 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     /* Open RPC port and attach to respond handler. */
     if (!port_rpc_.open("/" + log_name_ + "/rpc:i"))
     {
-        yError() << log_name_ + "::ctor. Error: cannot open input RPC port.";
+        yError() << log_name_ + "::configure. Error: cannot open input RPC port.";
 
         return false;
     }
     if (!(this->yarp().attachAsServer(port_rpc_)))
     {
-        yError() << log_name_ + "::ctor. Error: cannot attach RPC port to the respond handler.";
+        yError() << log_name_ + "::configure. Error: cannot attach RPC port to the respond handler.";
         return false;
     }
 
     /* Open RPC clients. */
     if (!port_rpc_segm_.open("/" + log_name_ + "/segmentation/rpc:o"))
     {
-        yError() << log_name_ + "::ctor. Error: cannot open output RPC port towards segmentation module.";
+        yError() << log_name_ + "::configure. Error: cannot open output RPC port towards segmentation module.";
 
         return false;
     }
 
     if (!port_rpc_pose_est_.open("/" + log_name_ + "/pose/rpc:o"))
     {
-        yError() << log_name_ + "::ctor. Error: cannot open output RPC port towards pose estimation module.";
+        yError() << log_name_ + "::configure. Error: cannot open output RPC port towards pose estimation module.";
 
         return false;
     }
 
     if (!port_rpc_trk_.open("/" + log_name_ + "/tracker/rpc:o"))
     {
-        yError() << log_name_ + "::ctor. Error: cannot open output RPC port towards pose tracker module.";
+        yError() << log_name_ + "::configure. Error: cannot open output RPC port towards pose tracker module.";
 
         return false;
     }
@@ -93,7 +106,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     /* Open port for object state. */
     if (!port_state_.open("/" + log_name_ + "/tracker/state:i"))
     {
-        yError() << log_name_ + "::ctor. Error: cannot open port for object state.";
+        yError() << log_name_ + "::configure. Error: cannot open port for object state.";
 
         return false;
     }
@@ -105,6 +118,13 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
 
     /* Configure iCub gaze controller. */
     gaze_ = std::make_unique<iCubGaze>(robot, log_name_);
+
+    /* Configure iCub joint controllers. */
+    joints_left_arm_ = std::make_unique<iCubMotorsPositions>(robot, "left", log_name_ + "/left_arm", /* use_arm = */ true, /* use_torso = */ false);
+    joints_right_arm_ = std::make_unique<iCubMotorsPositions>(robot, "right", log_name_ + "/right_arm", /* use_arm = */ true, /* use_torso = */ false);
+    joints_torso_ = std::make_unique<iCubMotorsPositions>(robot, "no_laterality", log_name_ + "/torso", /* use_arm = */ false, /* use_torso = */ true);
+    joints_left_hand_ = std::make_unique<iCubMotorsPositions>(robot, "left", log_name_ + "/left_hand", /* use_arm = */ true, /* use_torso = */ false);
+    joints_right_hand_ = std::make_unique<iCubMotorsPositions>(robot, "right", log_name_ + "/right_hand", /* use_arm = */ true, /* use_torso = */ false);
 
     /* Configure iCub Cartesian controllers. */
     if (enable_part_left)
@@ -118,6 +138,19 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
         cart_right_->enable_torso_limits("pitch", torso_pitch_min, torso_pitch_max);
     }
 
+    /* Set joints for home configuration. */
+    home_torso_joints_ = Vector3d::Zero();
+    home_arm_joints_ = toEigen(arm_joint_home_configuration);
+    home_hand_joints_ = VectorXd::Zero(9);
+    /* iCub joint 'hand_finger' */
+    home_hand_joints_(0) = 45.0;
+
+    /* Set joints velocities for arm home configuration to 10.0 deg/s. */
+    home_torso_joints_vels_ = VectorXd::Ones(home_torso_joints_.size()) * 10.0;
+    home_arm_joints_vels_ = VectorXd::Ones(home_arm_joints_.size()) * 10.0;
+    /* Set joints velocities for hand home configuration to 100.0 deg/s. */
+    home_hand_joints_vels_ = VectorXd::Ones(home_hand_joints_.size()) * 100.0;
+
     return true;
 }
 
@@ -128,6 +161,9 @@ bool Module::close()
     port_rpc_segm_.close();
     port_rpc_pose_est_.close();
     port_rpc_trk_.close();
+
+    go_home_arm();
+    go_home_hand();
 
     gaze_->go_home();
     gaze_->close();
@@ -169,8 +205,14 @@ bool Module::updateModule()
     }
     else if (state_ == State::Idle)
     {
-        /* Restore idle gaze configuration. */
+        /* Restore gaze idle configuration. */
         gaze_->go_home();
+
+        /* Restore torso and arms idle configuration. */
+        go_home_arm();
+
+        /* Restore hand idle configuration. */
+        go_home_hand();
 
         yInfo() << "[Idle -> WaitForFeedback]";
         state_ = State::WaitForFeedback;
@@ -418,4 +460,39 @@ bool Module::send_rpc(const yarp::os::RpcClient& port, std::vector<std::string> 
         cmd.addString(message);
 
     return port.write(cmd, reply);
+}
+
+
+void Module::go_home_arm()
+{
+    /* Switch to POSITION control. */
+    if (joints_torso_)
+        joints_torso_->set_mode(home_torso_considered_joints_);
+    if (joints_left_arm_)
+        joints_left_arm_->set_mode(home_arm_considered_joints_);
+    if (joints_right_arm_)
+        joints_right_arm_->set_mode(home_arm_considered_joints_);
+
+    /* Send setpoint. */
+    if (joints_torso_)
+        joints_torso_->set_positions(home_torso_joints_, home_torso_joints_vels_, home_torso_considered_joints_);
+    if (joints_left_arm_)
+        joints_left_arm_->set_positions(home_arm_joints_, home_arm_joints_vels_, home_arm_considered_joints_);
+    if (joints_right_arm_)
+        joints_right_arm_->set_positions(home_arm_joints_, home_arm_joints_vels_, home_arm_considered_joints_);
+}
+
+void Module::go_home_hand()
+{
+    /* Switch to POSITION control. */
+    if (joints_left_hand_)
+        joints_left_hand_->set_mode(home_hand_considered_joints_);
+    if (joints_right_hand_)
+        joints_right_hand_->set_mode(home_hand_considered_joints_);
+
+    /* Send setpoint. */
+    if (joints_left_hand_)
+        joints_left_hand_->set_positions(home_hand_joints_, home_hand_joints_vels_, home_hand_considered_joints_);
+    if (joints_right_hand_)
+        joints_right_hand_->set_positions(home_hand_joints_, home_hand_joints_vels_, home_hand_considered_joints_);
 }

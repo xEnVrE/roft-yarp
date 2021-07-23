@@ -12,6 +12,8 @@
 
 #include <iCubCartesian.h>
 #include <iCubGaze.h>
+#include <iCubMotorsPositions.h>
+#include <Utils.h>
 
 #include <thrift/ModuleIDL.h>
 
@@ -69,6 +71,13 @@ private:
     bool send_rpc(const yarp::os::RpcClient& port, std::vector<std::string> messages);
 
     /**
+     * Move robot to home configuration.
+     */
+    void go_home_arm();
+
+    void go_home_hand();
+
+    /**
      * iCub gaze controller.
      */
     std::unique_ptr<iCubGaze> gaze_;
@@ -95,6 +104,41 @@ private:
     double grasp_limit_y_upper_;
     double grasp_limit_z_lower_;
     double grasp_limit_z_upper_;
+
+    /**
+     * iCub joint controllers.
+     */
+    std::unique_ptr<iCubMotorsPositions> joints_left_arm_;
+    std::unique_ptr<iCubMotorsPositions> joints_right_arm_;
+    std::unique_ptr<iCubMotorsPositions> joints_torso_;
+    std::unique_ptr<iCubMotorsPositions> joints_left_hand_;
+    std::unique_ptr<iCubMotorsPositions> joints_right_hand_;
+
+    Eigen::VectorXd home_torso_joints_;
+    Eigen::VectorXd home_arm_joints_;
+    Eigen::VectorXd home_hand_joints_;
+    Eigen::VectorXd home_torso_joints_vels_;
+    Eigen::VectorXd home_arm_joints_vels_;
+    Eigen::VectorXd home_hand_joints_vels_;
+
+    const std::vector<std::string> home_torso_considered_joints_ =
+    {
+        "torso_yaw", "torso_roll", "torso_pitch"
+    };
+    const std::vector<std::string> home_arm_considered_joints_ =
+    {
+        "arm_shoulder_pitch", "arm_shoulder_roll", "arm_shoulder_yaw",
+        "arm_elbow",
+        "arm_wrist_prosup", "arm_wrist_pitch", "arm_wrist_yaw"
+    };
+    const std::vector<std::string> home_hand_considered_joints_ =
+    {
+        "hand_hand_finger",
+        "hand_thumb_oppose", "hand_thumb_proximal", "hand_thumb_distal",
+        "hand_index_proximal", "hand_index_distal",
+        "hand_middle_proximal", "hand_middle_distal",
+        "hand_little"
+    };
 
     /**
      * Objects short name to long name mapping.

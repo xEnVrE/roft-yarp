@@ -12,6 +12,7 @@ set(EXE_TARGET_NAME roft-track-n-grasp)
 # YARP
 find_package(YARP REQUIRED COMPONENTS
                            dev
+                           eigen
                            os
                            sig
 )
@@ -36,10 +37,16 @@ add_executable(${EXE_TARGET_NAME}
                include/module.h
                include/iCubCartesian.h
                include/iCubGaze.h
+               include/iCubMotors.h
+               include/iCubMotorsPositions.h
+               include/Utils.h
                src/main.cpp
                src/module.cpp
                src/iCubCartesian.cpp
                src/iCubGaze.cpp
+               src/iCubMotors.cpp
+               src/iCubMotorsPositions.cpp
+               src/Utils.cpp
                ${${EXE_TARGET_NAME}_THRIFT_SRC}
 )
 
@@ -48,6 +55,7 @@ target_include_directories(${EXE_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR
 target_link_libraries(${EXE_TARGET_NAME} PRIVATE
                                          Eigen3::Eigen
                                          YARP::YARP_dev
+                                         YARP::YARP_eigen
                                          YARP::YARP_init
                                          YARP::YARP_os
                                          YARP::YARP_sig
