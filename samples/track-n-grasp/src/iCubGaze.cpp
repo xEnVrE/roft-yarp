@@ -49,8 +49,11 @@ iCubGaze::iCubGaze(const std::string& robot_name, const std::string& port_prefix
 
 void iCubGaze::close()
 {
+    stop();
     gaze_->restoreContext(gaze_startup_context_);
-    driver_gaze_.close();
+
+    if (driver_gaze_.isValid())
+        driver_gaze_.close();
 }
 
 
