@@ -34,9 +34,11 @@ yarp_add_idl(${EXE_TARGET_NAME}_THRIFT_SRC ${${EXE_TARGET_NAME}_THRIFT_HDR})
 # Executable
 add_executable(${EXE_TARGET_NAME}
                include/module.h
+               include/iCubCartesian.h
                include/iCubGaze.h
                src/main.cpp
                src/module.cpp
+               src/iCubCartesian.cpp
                src/iCubGaze.cpp
                ${${EXE_TARGET_NAME}_THRIFT_SRC}
 )

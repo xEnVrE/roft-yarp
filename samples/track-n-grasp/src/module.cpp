@@ -25,6 +25,12 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     const std::string robot = rf.check("robot", Value("icub")).asString();
     frequency_ = rf.check("frequency", Value(30)).asInt();
 
+    const Bottle rf_cartesian_control = rf.findGroup("CARTESIAN_CONTROL");
+    approach_traj_time_ = rf_cartesian_control.check("pregrasp_traj_time", Value(3.0)).asDouble();
+    grasp_traj_time_ = rf_cartesian_control.check("grasp_traj_time", Value(3.0)).asDouble();
+    double torso_pitch_max = rf_cartesian_control.check("torso_pitch_max", Value()).asDouble();
+    double torso_pitch_min = rf_cartesian_control.check("torso_pitch_min", Value()).asDouble();
+
     const Bottle rf_gaze_limits = rf.findGroup("GAZE_LIMITS");
     enable_gaze_limit_x_ = rf_gaze_limits.check("enable_limit_x", Value(true)).asBool();
     enable_gaze_limit_y_ = rf_gaze_limits.check("enable_limit_y", Value(false)).asBool();
@@ -32,6 +38,18 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     gaze_limit_x_ = rf_gaze_limits.check("limit_x", Value(0.9)).asDouble();
     gaze_limit_y_ = rf_gaze_limits.check("limit_y", Value(0.0)).asDouble();
     gaze_limit_z_ = rf_gaze_limits.check("limit_z", Value(0.0)).asDouble();
+
+    const Bottle rf_grasp_limits = rf.findGroup("GRASP_LIMITS");
+    grasp_limit_x_lower_ = rf_grasp_limits.check("limit_x_lower", Value(-0.4)).asDouble();
+    grasp_limit_x_upper_ = rf_grasp_limits.check("limit_x_upper", Value(-0.2)).asDouble();
+    grasp_limit_y_lower_ = rf_grasp_limits.check("limit_y_lower", Value(-0.2)).asDouble();
+    grasp_limit_y_upper_ = rf_grasp_limits.check("limit_y_upper", Value(0.2)).asDouble();
+    grasp_limit_z_lower_ = rf_grasp_limits.check("limit_z_lower", Value(0.0)).asDouble();
+    grasp_limit_z_upper_ = rf_grasp_limits.check("limit_z_upper", Value(0.3)).asDouble();
+
+    const Bottle rf_parts = rf.findGroup("PARTS");
+    bool enable_part_left = rf_parts.check("left", Value(false)).asBool();
+    bool enable_part_right = rf_parts.check("right", Value(false)).asBool();
 
     const Bottle rf_steady_state_detector = rf.findGroup("STEADY_STATE_DETECTOR");
     obj_ss_time_thr_ = rf_steady_state_detector.check("time_threshold", Value(4.0)).asDouble();
@@ -88,6 +106,18 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     /* Configure iCub gaze controller. */
     gaze_ = std::make_unique<iCubGaze>(robot, log_name_);
 
+    /* Configure iCub Cartesian controllers. */
+    if (enable_part_left)
+    {
+        cart_left_ = std::make_unique<iCubCartesian>(robot, "left", log_name_);
+        cart_left_->enable_torso_limits("pitch", torso_pitch_min, torso_pitch_max);
+    }
+    if (enable_part_right)
+    {
+        cart_right_ = std::make_unique<iCubCartesian>(robot, "right", log_name_);
+        cart_right_->enable_torso_limits("pitch", torso_pitch_min, torso_pitch_max);
+    }
+
     return true;
 }
 
@@ -101,6 +131,12 @@ bool Module::close()
 
     gaze_->go_home();
     gaze_->close();
+
+    if (cart_left_)
+        cart_left_->close();
+
+    if (cart_right_)
+        cart_right_->close();
 
     return true;
 }
@@ -127,21 +163,17 @@ bool Module::updateModule()
     if (valid_pose)
         set_rx_time();
 
-    if (state_ == State::Idle)
+    if (state_ == State::Approach)
+    {
+        ;
+    }
+    else if (state_ == State::Idle)
     {
         /* Restore idle gaze configuration. */
         gaze_->go_home();
 
         yInfo() << "[Idle -> WaitForFeedback]";
         state_ = State::WaitForFeedback;
-    }
-    else if (state_ == State::WaitForFeedback)
-    {
-        if (elapsed < feedback_wait_threshold_)
-        {
-            yInfo() << "[WaitForFeedback -> Tracking]";
-            state_ = State::Tracking;
-        }
     }
     else if (state_ == State::GoHome)
     {
@@ -170,8 +202,19 @@ bool Module::updateModule()
                 gaze_->look_at_stream(target);
             }
 
-            if (is_object_steady(velocity))
-                yInfo() << "[STEADY!]";
+            if (is_object_steady(velocity) && is_pose_grasp_safe(pose))
+            {
+                yInfo() << "[Tracking -> Approach]";
+                state_ = State::Approach;
+            }
+        }
+    }
+    else if (state_ == State::WaitForFeedback)
+    {
+        if (elapsed < feedback_wait_threshold_)
+        {
+            yInfo() << "[WaitForFeedback -> Tracking]";
+            state_ = State::Tracking;
         }
     }
 
@@ -276,6 +319,34 @@ bool Module::is_pose_gaze_safe(const Pose& pose)
         return false;
 
     if (enable_gaze_limit_z_ && (abs(z) > gaze_limit_z_))
+        return false;
+
+    return true;
+}
+
+
+bool Module::is_pose_grasp_safe(const Pose& pose)
+{
+    const double& x = pose.translation()(0);
+    const double& y = pose.translation()(1);
+    const double& z = pose.translation()(2);
+
+    if (x > grasp_limit_x_upper_)
+        return false;
+
+    if (x < grasp_limit_x_lower_)
+        return false;
+
+    if (y > grasp_limit_y_upper_)
+        return false;
+
+    if (y < grasp_limit_y_lower_)
+        return false;
+
+    if (z > grasp_limit_z_upper_)
+        return false;
+
+    if (z < grasp_limit_z_lower_)
         return false;
 
     return true;

@@ -10,6 +10,7 @@
 
 #include <Eigen/Dense>
 
+#include <iCubCartesian.h>
 #include <iCubGaze.h>
 
 #include <thrift/ModuleIDL.h>
@@ -51,6 +52,8 @@ private:
 
     bool is_pose_gaze_safe(const Eigen::Transform<double, 3, Eigen::Affine>& pose);
 
+    bool is_pose_grasp_safe(const Eigen::Transform<double, 3, Eigen::Affine>& pose);
+
     bool is_object_steady(const Eigen::Vector3d& velocity);
 
     /**
@@ -77,6 +80,21 @@ private:
     double gaze_limit_x_;
     double gaze_limit_y_;
     double gaze_limit_z_;
+
+    /**
+     * iCub Cartesian controllers.
+     */
+    std::unique_ptr<iCubCartesian> cart_left_;
+    std::unique_ptr<iCubCartesian> cart_right_;
+
+    double approach_traj_time_;
+    double grasp_traj_time_;
+    double grasp_limit_x_lower_;
+    double grasp_limit_x_upper_;
+    double grasp_limit_y_lower_;
+    double grasp_limit_y_upper_;
+    double grasp_limit_z_lower_;
+    double grasp_limit_z_upper_;
 
     /**
      * Objects short name to long name mapping.
@@ -141,7 +159,7 @@ private:
     /**
      * Module state.
      */
-    enum class State { Idle, WaitForFeedback, GoHome, Tracking };
+    enum class State { Approach, Idle, WaitForFeedback, GoHome, Tracking };
 
     State state_ = State::Idle;
 
