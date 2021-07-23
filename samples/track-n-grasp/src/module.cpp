@@ -144,6 +144,8 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     home_hand_joints_ = VectorXd::Zero(9);
     /* iCub joint 'hand_finger' */
     home_hand_joints_(0) = 45.0;
+    /* iCub joint 'thumb_opposition' */
+    home_hand_joints_(1) = 10.0;
 
     /* Set joints velocities for arm home configuration to 10.0 deg/s. */
     home_torso_joints_vels_ = VectorXd::Ones(home_torso_joints_.size()) * 10.0;
