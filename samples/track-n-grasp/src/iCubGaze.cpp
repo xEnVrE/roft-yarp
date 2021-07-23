@@ -84,6 +84,12 @@ bool iCubGaze::go_home()
 }
 
 
+void iCubGaze::set_home_configuation(const yarp::sig::Vector& configuration)
+{
+    home_configuration_ = configuration;
+}
+
+
 bool iCubGaze::stop()
 {
     return gaze_->stopControl();

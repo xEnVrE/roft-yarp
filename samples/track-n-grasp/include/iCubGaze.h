@@ -27,6 +27,8 @@ public:
 
     bool go_home();
 
+    void set_home_configuation(const yarp::sig::Vector& configuration);
+
     bool stop();
 
 private:
