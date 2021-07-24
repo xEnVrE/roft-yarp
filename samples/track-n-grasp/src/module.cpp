@@ -757,8 +757,9 @@ bool Module::execute_grasp(const Pose& pose)
 
         /* Arm pregrasp configuration. */
         const auto dir = grasp_target_position_ - grasp_center_;
+        const auto target = grasp_target_position_ + 0.05 * dir / norm(dir);
 
-        if (!is_position_cart_safe(grasp_target_position_ + .05 * dir / norm(dir)))
+        if (!is_position_cart_safe(target))
         {
             yError() << "[Grasp][ArmPregrasp] *********** The commanded position is not safe ***********";
 
@@ -769,7 +770,7 @@ bool Module::execute_grasp(const Pose& pose)
             return true;
         }
 
-        grasp_cart_->go_to_pose(grasp_target_position_ + .05 * dir / norm(dir), grasp_target_orientation_);
+        grasp_cart_->go_to_pose(target, grasp_target_orientation_);
 
         yInfo() << "[Grasp][ArmPregrasp -> WaitArmPregrasp]";
 
@@ -875,10 +876,10 @@ bool Module::execute_grasp(const Pose& pose)
     else if (grasp_state_ == GraspState::Lift)
     {
         /* Object lifting .*/
-        yarp::sig::Vector target_up = grasp_target_position_ + yarp::sig::Vector{0.0, 0.0, 0.1};
-        gaze_->look_at_stream(target_up);
+        const auto target = grasp_target_position_ + yarp::sig::Vector{0.0, 0.0, 0.1};
+        gaze_->look_at_stream(target);
 
-        if (!is_position_cart_safe(target_up))
+        if (!is_position_cart_safe(target))
         {
             yError() << "[Grasp][Lift] *********** The commanded position is not safe ***********";
 
@@ -889,7 +890,7 @@ bool Module::execute_grasp(const Pose& pose)
             return true;
         }
 
-        grasp_cart_->go_to_pose(target_up, grasp_target_orientation_);
+        grasp_cart_->go_to_pose(target, grasp_target_orientation_);
 
         yInfo() << "[Grasp][Lift -> WaitLift]";
 
