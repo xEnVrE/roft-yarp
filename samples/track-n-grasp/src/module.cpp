@@ -801,8 +801,10 @@ bool Module::execute_grasp(const Pose& pose)
     else if (grasp_state_ == GraspState::ArmReach)
     {
         /* Arm final configuration. */
+        const auto dir = grasp_center_ - grasp_target_position_;
+        const auto target = grasp_target_position_ + 0.015 * dir / norm(dir);
 
-        if (!is_position_cart_safe(grasp_target_position_))
+        if (!is_position_cart_safe(target))
         {
             yError() << "[Grasp][ArmReach] *********** The commanded position is not safe ***********";
 
@@ -813,7 +815,7 @@ bool Module::execute_grasp(const Pose& pose)
             return true;
         }
 
-        grasp_cart_->go_to_pose(grasp_target_position_, grasp_target_orientation_);
+        grasp_cart_->go_to_pose(target, grasp_target_orientation_);
 
         yInfo() << "[Grasp][ArmReach -> WaitArmReach]";
 
