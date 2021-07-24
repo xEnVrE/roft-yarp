@@ -249,7 +249,7 @@ private:
         Grasp, WaitGrasp,
         Lift, WaitLift, WaitAfterLift,
         Release, WaitRelease,
-        Done
+        Cleanup, Done
     };
 
     GraspState grasp_state_ = GraspState::Idle;

@@ -286,20 +286,18 @@ bool Module::updateModule()
     }
     else if (state_ == State::Grasp)
     {
-        if(execute_grasp(grasp_object_pose_))
+        if (grasp_state_ == GraspState::Done)
         {
-            if (grasp_state_ == GraspState::Done)
-            {
-                yInfo() << "[Grasp][Done -> Idle]";
+            yInfo() << "[Grasp][Done -> Idle]";
 
-                grasp_state_ = GraspState::Idle;
+            grasp_state_ = GraspState::Idle;
 
-                yInfo() << "[Grasp -> Idle]";
+            yInfo() << "[Grasp -> Idle]";
 
-                state_ = State::Idle;
-            }
+            state_ = State::Idle;
         }
-        else
+
+        if(!execute_grasp(grasp_object_pose_))
         {
             yInfo() << "[Grasp -> Idle]";
 
@@ -913,9 +911,9 @@ bool Module::execute_grasp(const Pose& pose)
             {
                 yInfo() << log_name_ + "::execute_grasp(). Release done.";
 
-                yInfo() << "[Grasp][WaitRelease -> Done]";
+                yInfo() << "[Grasp][WaitRelease -> Cleanup]";
 
-                grasp_state_ = GraspState::Done;
+                grasp_state_ = GraspState::Cleanup;
 
                 return true;
             }
@@ -925,7 +923,7 @@ bool Module::execute_grasp(const Pose& pose)
 
         return true;
     }
-    else if (grasp_state_ == GraspState::Done)
+    else if (grasp_state_ == GraspState::Cleanup)
     {
         yInfo() << log_name_ + "::execute_grasp(). Cleaning up.";
 
@@ -937,6 +935,12 @@ bool Module::execute_grasp(const Pose& pose)
 
         grasp_cart_ = nullptr;
         grasp_joints_hand_ = nullptr;
+
+        yInfo() << "[Grasp][Cleanup -> Done]";
+
+        grasp_state_ = GraspState::Done;
+
+        return true;
     }
 
     return true;
