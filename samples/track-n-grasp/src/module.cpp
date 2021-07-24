@@ -33,7 +33,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     frequency_ = rf.check("frequency", Value(30)).asInt();
 
     const Bottle rf_cartesian_control = rf.findGroup("CARTESIAN_CONTROL");
-    approach_traj_time_ = rf_cartesian_control.check("approach_traj_time", Value(3.0)).asDouble();
+    approach_traj_time_ = rf_cartesian_control.check("approach_traj_time", Value(5.0)).asDouble();
     double torso_pitch_max = rf_cartesian_control.check("torso_pitch_max", Value(10.0)).asDouble();
     double torso_pitch_min = rf_cartesian_control.check("torso_pitch_min", Value(-10.0)).asDouble();
 
@@ -160,21 +160,24 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     grasp_hand_joints_(0) = 45.0;
     grasp_hand_joints_(1) = 80.0;
     grasp_hand_joints_(2) = 40.0;
-    grasp_hand_joints_(3) = 35.0;
+    grasp_hand_joints_(3) = 40.0;
     grasp_hand_joints_(4) = 40.0;
-    grasp_hand_joints_(5) = 35.0;
+    grasp_hand_joints_(5) = 40.0;
     grasp_hand_joints_(6) = 40.0;
     grasp_hand_joints_(7) = 35.0;
     grasp_hand_joints_(8) = 100.0;
+    /* Set hand joints for post grasp configuration. */
+    postgrasp_hand_joints_ = home_hand_joints_;
+    postgrasp_hand_joints_(1) = 80.0;
 
-    /* Set joints velocities for arm home configuration to 10.0 deg/s. */
+    /* Set joints velocities for arm home configuration to 5.0 deg/s. */
     home_torso_joints_vels_ = VectorXd::Ones(home_torso_joints_.size()) * 10.0;
     home_arm_joints_vels_ = VectorXd::Ones(home_arm_joints_.size()) * 10.0;
     /* Set joints velocities for hand home configuration to 100.0 deg/s. */
     home_hand_joints_vels_ = VectorXd::Ones(home_hand_joints_.size()) * 100.0;
     /* Set hand joints velocities for pregrasp. */
-    pregrasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 60.0;
-    grasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 60.0;
+    pregrasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 100.0;
+    grasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 100.0;
 
     return true;
 }
@@ -271,7 +274,7 @@ bool Module::updateModule()
         /* Restore hand idle configuration. */
         go_home_hand();
 
-        start_counting(5.0);
+        start_counting(3.0);
 
         yInfo() << "[Idle -> WaitForHome]";
         state_ = State::WaitForHome;
@@ -771,7 +774,7 @@ bool Module::execute_grasp(const Pose& pose)
 
         grasp_state_ = GraspState::WaitArmPregrasp;
         // start_counting(0.5);
-        start_counting(3.0);
+        start_counting(5.0);
 
         return true;
     }
@@ -814,7 +817,7 @@ bool Module::execute_grasp(const Pose& pose)
 
         grasp_state_ = GraspState::WaitArmReach;
         // start_counting(0.5);
-        start_counting(3.0);
+        start_counting(5.0);
 
         return true;
     }
@@ -844,7 +847,7 @@ bool Module::execute_grasp(const Pose& pose)
         yInfo() << "[Grasp][Grasp -> WaitGrasp]";
 
         grasp_state_ = GraspState::WaitGrasp;
-        start_counting(1.0);
+        start_counting(6.0);
 
         return true;
     }
@@ -891,7 +894,7 @@ bool Module::execute_grasp(const Pose& pose)
 
         grasp_state_ = GraspState::WaitLift;
         // start_counting(0.5);
-        start_counting(3.0);
+        start_counting(5.0);
 
         return true;
     }
@@ -931,11 +934,11 @@ bool Module::execute_grasp(const Pose& pose)
     else if (grasp_state_ == GraspState::Release)
     {
         /* Object release .*/
-        grasp_joints_hand_->set_positions(home_hand_joints_, grasp_hand_joints_vels_, hand_considered_joints_);
+        grasp_joints_hand_->set_positions(postgrasp_hand_joints_, grasp_hand_joints_vels_, hand_considered_joints_);
         yInfo() << "[Grasp][Release -> WaitRelease]";
 
         grasp_state_ = GraspState::WaitRelease;
-        start_counting(1.0);
+        start_counting(3.0);
 
         return true;
     }

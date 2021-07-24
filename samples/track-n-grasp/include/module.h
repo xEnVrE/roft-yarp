@@ -133,6 +133,7 @@ private:
     Eigen::VectorXd home_hand_joints_;
     Eigen::VectorXd pregrasp_hand_joints_;
     Eigen::VectorXd grasp_hand_joints_;
+    Eigen::VectorXd postgrasp_hand_joints_;
     Eigen::VectorXd home_torso_joints_vels_;
     Eigen::VectorXd home_arm_joints_vels_;
     Eigen::VectorXd home_hand_joints_vels_;
