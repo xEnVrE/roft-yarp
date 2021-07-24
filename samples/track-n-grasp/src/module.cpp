@@ -155,6 +155,17 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     pregrasp_hand_joints_ = VectorXd::Zero(9);
     pregrasp_hand_joints_(0) = 45.0;
     pregrasp_hand_joints_(1) = 80.0;
+    /* Set hand joints for grasp configuration. */
+    grasp_hand_joints_ = VectorXd::Zero(9);
+    grasp_hand_joints_(0) = 45.0;
+    grasp_hand_joints_(1) = 80.0;
+    grasp_hand_joints_(2) = 40.0;
+    grasp_hand_joints_(3) = 35.0;
+    grasp_hand_joints_(4) = 40.0;
+    grasp_hand_joints_(5) = 35.0;
+    grasp_hand_joints_(6) = 40.0;
+    grasp_hand_joints_(7) = 35.0;
+    grasp_hand_joints_(8) = 100.0;
 
     /* Set joints velocities for arm home configuration to 10.0 deg/s. */
     home_torso_joints_vels_ = VectorXd::Ones(home_torso_joints_.size()) * 10.0;
@@ -162,7 +173,8 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     /* Set joints velocities for hand home configuration to 100.0 deg/s. */
     home_hand_joints_vels_ = VectorXd::Ones(home_hand_joints_.size()) * 100.0;
     /* Set hand joints velocities for pregrasp. */
-    pregrasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 100.0;
+    pregrasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 60.0;
+    grasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 60.0;
 
     return true;
 }
@@ -170,23 +182,58 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
 
 bool Module::close()
 {
-    port_rpc_.close();
-    port_rpc_segm_.close();
-    port_rpc_pose_est_.close();
-    port_rpc_trk_.close();
+    if (cart_left_)
+        cart_left_->stop();
 
-    go_home_arm();
-    go_home_hand();
-    gaze_->go_home();
-    std::this_thread::sleep_for(5s);
+    if (cart_right_)
+        cart_right_->stop();
 
-    gaze_->close();
+    if (joints_left_arm_)
+        joints_left_arm_->stop(home_arm_considered_joints_);
+
+    if (joints_right_arm_)
+        joints_right_arm_->stop(home_arm_considered_joints_);
+
+    if (joints_torso_)
+        joints_torso_->stop(home_torso_considered_joints_);
+
+    if (gaze_)
+        gaze_->stop();
+
+    if (joints_left_hand_)
+        joints_left_hand_->stop(home_hand_considered_joints_);
+
+    if (joints_right_hand_)
+        joints_right_hand_->stop(home_hand_considered_joints_);;
 
     if (cart_left_)
         cart_left_->close();
 
     if (cart_right_)
         cart_right_->close();
+
+    if (joints_left_arm_)
+        joints_left_arm_->close();
+
+    if (joints_right_arm_)
+        joints_right_arm_->close();
+
+    if (joints_torso_)
+        joints_torso_->close();
+
+    if (gaze_)
+        gaze_->close();
+
+    if (joints_left_hand_)
+        joints_left_hand_->close();
+
+    if (joints_right_hand_)
+        joints_right_hand_->close();
+
+    port_rpc_.close();
+    port_rpc_segm_.close();
+    port_rpc_pose_est_.close();
+    port_rpc_trk_.close();
 
     return true;
 }
@@ -224,8 +271,10 @@ bool Module::updateModule()
         /* Restore hand idle configuration. */
         go_home_hand();
 
-        yInfo() << "[Idle -> WaitForFeedback]";
-        state_ = State::WaitForFeedback;
+        start_counting(5.0);
+
+        yInfo() << "[Idle -> WaitForHome]";
+        state_ = State::WaitForHome;
     }
     else if (state_ == State::GoHome)
     {
@@ -237,24 +286,25 @@ bool Module::updateModule()
     }
     else if (state_ == State::Grasp)
     {
-        if (execute_grasp(grasp_object_pose_))
+        if(execute_grasp(grasp_object_pose_))
         {
-            yInfo() << "[Grasp -> PostGraspSuccess]";
-            state_ = State::PostGraspSuccess;
+            if (grasp_state_ == GraspState::Done)
+            {
+                yInfo() << "[Grasp][Done -> Idle]";
+
+                grasp_state_ = GraspState::Idle;
+
+                yInfo() << "[Grasp -> Idle]";
+
+                state_ = State::Idle;
+            }
         }
         else
         {
-            yInfo() << "[Grasp -> PostGraspFailure]";
-            state_ = State::PostGraspSuccess;
+            yInfo() << "[Grasp -> Idle]";
+
+            state_ = State::Idle;
         }
-    }
-    else if (state_ == State::PostGraspFailure)
-    {
-        ;
-    }
-    else if (state_ == State::PostGraspSuccess)
-    {
-        ;
     }
     else if (state_ == State::Tracking)
     {
@@ -278,6 +328,7 @@ bool Module::updateModule()
             if (is_object_steady(velocity) && is_pose_grasp_safe(pose))
             {
                 grasp_object_pose_ = pose;
+                grasp_state_ = GraspState::Evaluation;
 
                 yInfo() << "[Tracking -> Grasp]";
                 state_ = State::Grasp;
@@ -290,6 +341,14 @@ bool Module::updateModule()
         {
             yInfo() << "[WaitForFeedback -> Tracking]";
             state_ = State::Tracking;
+        }
+    }
+    else if (state_ == State::WaitForHome)
+    {
+        if (is_elapsed_from_start_counting())
+        {
+            yInfo() << "[WaitForHome -> WaitForFeedback]";
+            state_ = State::WaitForFeedback;
         }
     }
 
@@ -430,6 +489,15 @@ bool Module::is_pose_grasp_safe(const Pose& pose)
 }
 
 
+bool Module::is_position_cart_safe(const yarp::sig::Vector& position)
+{
+    Pose pose;
+    pose = Translation<double, 3>(position[0], position[1], position[2]);
+
+    return is_pose_grasp_safe(pose);
+}
+
+
 bool Module::is_object_steady(const Eigen::Vector3d& velocity)
 {
     /* Check if object is steady state. */
@@ -487,6 +555,20 @@ void Module::set_rx_time()
 }
 
 
+void Module::start_counting(const double& total_time)
+{
+    time_0_ = std::chrono::steady_clock::now();
+
+    total_time_ = total_time;
+}
+
+
+bool Module::is_elapsed_from_start_counting()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time_0_).count() / 1000.0 > total_time_;
+}
+
+
 bool Module::send_rpc(const yarp::os::RpcClient& port, std::vector<std::string> messages)
 {
     Bottle cmd, reply;
@@ -535,114 +617,327 @@ void Module::go_home_hand()
 
 bool Module::execute_grasp(const Pose& pose)
 {
-    /* Keep gazing at the object. */
-    gaze_->controller().setTrackingMode(true);
-    Vector target(3);
-    target(0) = pose.translation()(0);
-    target(1) = pose.translation()(1);
-    target(2) = pose.translation()(2);
-    gaze_->look_at_stream(target);
-
-    /* Cardinal points grasp strategy. */
-
-    if ((cart_left_ == nullptr) && (cart_right_ == nullptr))
-        return false;
-
-    std::vector<cardinal_points_grasp::rankable_candidate> candidates;
-    std::vector<cardinal_points_grasp::rankable_candidate> candidates_l;
-    std::vector<cardinal_points_grasp::rankable_candidate> candidates_r;
-    int context_l;
-    int context_r;
-
-    if (cart_left_)
+    if (grasp_state_ == GraspState::Evaluation)
     {
-        auto grasper = std::make_unique<CardinalPointsGrasp>(object_name_, "left", pregrasp_hand_joints_);
-        std::tie(candidates_l, context_l) = grasper->getCandidates(pose, &(cart_left_->controller()));
+        /* Keep gazing at the object. */
+        gaze_->controller().setTrackingMode(true);
+        Vector target(3);
+        target(0) = pose.translation()(0);
+        target(1) = pose.translation()(1);
+        target(2) = pose.translation()(2);
+        gaze_->look_at_stream(target);
+
+        /* Cardinal points grasp strategy. */
+
+        if ((cart_left_ == nullptr) && (cart_right_ == nullptr))
+        {
+            gaze_->stop();
+            gaze_->controller().setTrackingMode(false);
+
+            return false;
+        }
+
+        std::vector<cardinal_points_grasp::rankable_candidate> candidates;
+        std::vector<cardinal_points_grasp::rankable_candidate> candidates_l;
+        std::vector<cardinal_points_grasp::rankable_candidate> candidates_r;
+        int context_l;
+        int context_r;
+
+        if (cart_left_)
+        {
+            auto grasper = std::make_unique<CardinalPointsGrasp>(object_name_, "left", pregrasp_hand_joints_);
+            std::tie(candidates_l, context_l) = grasper->getCandidates(pose, &(cart_left_->controller()));
+        }
+
+        if (cart_right_)
+        {
+            auto grasper = std::make_unique<CardinalPointsGrasp>(object_name_, "right", pregrasp_hand_joints_);
+            std::tie(candidates_r, context_r) = grasper->getCandidates(pose, &(cart_right_->controller()));
+        }
+
+        if (cart_right_ && (cart_left_ == nullptr))
+            candidates = candidates_r;
+        else if(cart_left_ && (cart_right_ == nullptr))
+            candidates = candidates_l;
+        else
+        {
+            candidates = candidates_r;
+            candidates.insert(candidates.end(), candidates_l.begin(), candidates_l.end());
+            std::sort(candidates.begin(), candidates.end(), CardinalPointsGrasp::compareCandidates);
+        }
+
+        if (candidates.empty())
+        {
+            gaze_->stop();
+            gaze_->controller().setTrackingMode(false);
+
+            yError() << log_name_ << "::execute_grasp(). No valid grasping candidates.";
+
+            return false;
+        }
+
+        const auto& best = candidates[0];
+        grasp_type_ = std::get<0>(best);
+        const auto& T = std::get<2>(best);
+        grasp_center_ = std::get<3>(best);
+        grasp_target_position_ = T.getCol(3).subVector(0, 2);
+        grasp_target_orientation_ = dcm2axis(T);
+
+        yInfo() << log_name_ + "::execute_grasp(). Found grasp pose using" << grasp_type_ << "arm at" << grasp_target_position_.toString();
+
+        /* Arm selection. */
+
+        int context;
+        std::shared_ptr<iCubCartesian> cart;
+        std::shared_ptr<iCubMotorsPositions> joints_hand;
+        if (grasp_type_ == "left")
+        {
+            grasp_context_ = context_l;
+            grasp_cart_ = cart_left_;
+            grasp_joints_hand_ = joints_left_hand_;
+        }
+        else
+        {
+            grasp_context_ = context_r;
+            grasp_cart_ = cart_right_;
+            grasp_joints_hand_ = joints_right_hand_;
+        }
+
+        if ((grasp_cart_ == nullptr) || (grasp_joints_hand_ == nullptr))
+        {
+            gaze_->stop();
+            gaze_->controller().setTrackingMode(false);
+
+            yError() << log_name_ << "::execute_grasp. Unexpected state. Either the cartesian or joints driver pointers are nullptr";
+
+            return false;
+        }
+
+        /* Cartesian configuration .*/
+        grasp_cart_->controller().stopControl();
+        grasp_cart_->controller().storeContext(&backup_grasp_context_);
+        grasp_cart_->controller().restoreContext(grasp_context_);
+        grasp_cart_->controller().setInTargetTol(.001);
+        grasp_cart_->controller().setTrajTime(approach_traj_time_);
+
+        /* Hand pregrasp configuration .*/
+        grasp_joints_hand_->set_positions(pregrasp_hand_joints_, pregrasp_hand_joints_vels_, hand_considered_joints_);
+
+        yInfo() << "[Grasp][Evaluate -> WaitHandPregrasp]";
+
+        grasp_state_ = GraspState::WaitHandPregrasp;
+        start_counting(1.0);
+
+        return true;
     }
-
-    if (cart_right_)
+    else if (grasp_state_ == GraspState::WaitHandPregrasp)
     {
-        auto grasper = std::make_unique<CardinalPointsGrasp>(object_name_, "right", pregrasp_hand_joints_);
-        std::tie(candidates_r, context_r) = grasper->getCandidates(pose, &(cart_right_->controller()));
+        if (is_elapsed_from_start_counting())
+        {
+            if (grasp_joints_hand_->check_motion_done(hand_considered_joints_))
+            {
+                yInfo() << log_name_ + "::execute_grasp(). Hand ready in pregrasp configuration";
+
+                yInfo() << "[Grasp][Evaluate -> ArmPregrasp]";
+
+                grasp_state_ = GraspState::ArmPregrasp;
+
+                return true;
+            }
+            else
+                start_counting(1.0);
+        }
+
+        return true;
     }
-
-    if (cart_right_ && (cart_left_ == nullptr))
-        candidates = candidates_r;
-    else if(cart_left_ && (cart_right_ == nullptr))
-        candidates = candidates_l;
-    else
+    else if (grasp_state_ == GraspState::ArmPregrasp)
     {
-        candidates = candidates_r;
-        candidates.insert(candidates.end(), candidates_l.begin(), candidates_l.end());
-        std::sort(candidates.begin(), candidates.end(), CardinalPointsGrasp::compareCandidates);
+
+        /* Arm pregrasp configuration. */
+        const auto dir = grasp_target_position_ - grasp_center_;
+        grasp_cart_->go_to_pose(grasp_target_position_ + .05 * dir / norm(dir), grasp_target_orientation_);
+
+        yInfo() << "[Grasp][ArmPregrasp -> WaitArmPregrasp]";
+
+        grasp_state_ = GraspState::WaitArmPregrasp;
+        // start_counting(0.5);
+        start_counting(3.0);
+
+        return true;
     }
-
-    if (candidates.empty())
+    else if (grasp_state_ == GraspState::WaitArmPregrasp)
     {
-        yError() << log_name_ << "::evaluate_grasp. No valid grasping candidates.";
+        if (is_elapsed_from_start_counting())
+        {
+            // if(grasp_cart_->check_motion_done())
+            // {
+                yInfo() << log_name_ + "::execute_grasp(). " + grasp_type_ << "arm ready in pregrasp configuration";
 
-        return false;
+                yInfo() << "[Grasp][WaitArmPregrasp -> ArmReach]";
+
+                grasp_state_ = GraspState::ArmReach;
+            // }
+            // else
+            //     start_counting(0.5);
+        }
+
+        return true;
     }
-
-    const auto& best = candidates[0];
-    const auto& type = std::get<0>(best);
-    const auto& T = std::get<2>(best);
-    const auto& center = std::get<3>(best);
-    const auto target_position = T.getCol(3).subVector(0, 2);
-    const auto target_orientation = dcm2axis(T);
-
-    yInfo() << "Found grasp pose using" << type << "arm at" << target_position.toString();
-
-    /* Arm selection. */
-
-    int context;
-    std::shared_ptr<iCubCartesian> cart;
-    std::shared_ptr<iCubMotorsPositions> joints_hand;
-    if (type == "left")
+    else if (grasp_state_ == GraspState::ArmReach)
     {
-        context = context_l;
-        cart = cart_left_;
-        joints_hand = joints_left_hand_;
+        /* Arm final configuration. */
+        grasp_cart_->go_to_pose(grasp_target_position_, grasp_target_orientation_);
+
+        yInfo() << "[Grasp][ArmReach -> WaitArmReach]";
+
+        grasp_state_ = GraspState::WaitArmReach;
+        // start_counting(0.5);
+        start_counting(3.0);
+
+        return true;
     }
-    else
+    else if (grasp_state_ == GraspState::WaitArmReach)
     {
-        context = context_r;
-        cart = cart_right_;
-        joints_hand = joints_right_hand_;
+        if (is_elapsed_from_start_counting())
+        {
+            // if(grasp_cart_->check_motion_done())
+            // {
+                yInfo() << log_name_ + "::execute_grasp(). " + grasp_type_ << "arm ready in grasping configuration";
+
+                yInfo() << "[Grasp][WaitArmReach -> Grasp]";
+
+                grasp_state_ = GraspState::Grasp;
+            // }
+            // else
+            //     start_counting(0.5);
+        }
+
+        return true;
     }
-
-    if ((cart == nullptr) || (joints_hand == nullptr))
-        return false;
-
-    /* Cartesian configuration .*/
-    cart->controller().stopControl();
-    cart->controller().restoreContext(context);
-    cart->controller().setInTargetTol(.001);
-    cart->controller().setTrajTime(approach_traj_time_);
-
-    /* Hand pregrasp configuration .*/
-    joints_hand->set_positions(pregrasp_hand_joints_, pregrasp_hand_joints_vels_, hand_considered_joints_);
-    bool done = false;
-    while (!done)
+    else if (grasp_state_ == GraspState::Grasp)
     {
-        std::this_thread::sleep_for(1s);
-        done = joints_hand->check_motion_done(hand_considered_joints_);
-    };
+        /* Hand grasp configuration .*/
+        grasp_joints_hand_->set_positions(grasp_hand_joints_, grasp_hand_joints_vels_, hand_considered_joints_);
 
-    yInfo() << type << "hand ready in pregrasp configuration";
+        yInfo() << "[Grasp][Grasp -> WaitGrasp]";
 
-    /* Arm pregrasp configuration. */
-    const auto dir = target_position - center;
-    cart->go_to_pose(target_position + .05 * dir / norm(dir), target_orientation);
-    cart->controller().waitMotionDone(0.1, 3.0);
+        grasp_state_ = GraspState::WaitGrasp;
+        start_counting(1.0);
 
-    yInfo() << type << "arm ready in pregrasp configuration";
+        return true;
+    }
+    else if (grasp_state_ == GraspState::WaitGrasp)
+    {
+        if (is_elapsed_from_start_counting())
+        {
+            if (grasp_joints_hand_->check_motion_done(hand_considered_joints_))
+            {
+                yInfo() << log_name_ + "::execute_grasp()." << grasp_type_ << "hand ready in grasping configuration";
 
-    /* Arm final configuration. */
-    cart->go_to_pose(target_position, target_orientation);
-    cart->controller().waitMotionDone(0.1, 3.0);
+                yInfo() << "[Grasp][WaitGrasp -> Lift]";
 
-    yInfo() << type << "arm ready in grasping configuration";
+                grasp_state_ = GraspState::Lift;
+
+                return true;
+            }
+            else
+                start_counting(1.0);
+        }
+
+        return true;
+    }
+    else if (grasp_state_ == GraspState::Lift)
+    {
+        /* Object lifting .*/
+        yarp::sig::Vector target_up = grasp_target_position_ + yarp::sig::Vector{0.0, 0.0, 0.1};
+        gaze_->look_at_stream(target_up);
+        grasp_cart_->go_to_pose(target_up, grasp_target_orientation_);
+
+        yInfo() << "[Grasp][Lift -> WaitLift]";
+
+        grasp_state_ = GraspState::WaitLift;
+        // start_counting(0.5);
+        start_counting(3.0);
+
+        return true;
+    }
+    else if (grasp_state_ == GraspState::WaitLift)
+    {
+        if (is_elapsed_from_start_counting())
+        {
+            // if(grasp_cart_->check_motion_done())
+            // {
+                yInfo() << log_name_ + "::execute_grasp(). Lifted completed.";
+
+                yInfo() << "[Grasp][WaitLift -> WaitAfterLift]";
+
+                grasp_state_ = GraspState::WaitAfterLift;
+
+                start_counting(3.0);
+            // }
+            // else
+            //     start_counting(0.5);
+        }
+
+        return true;
+    }
+    else if (grasp_state_ == GraspState::WaitAfterLift)
+    {
+        if (is_elapsed_from_start_counting())
+        {
+            yInfo() << log_name_ + "::execute_grasp(). Wait after lift completed.";
+
+            yInfo() << "[Grasp][WaitAfterLift -> Release]";
+
+            grasp_state_ = GraspState::Release;
+        }
+
+        return true;
+    }
+    else if (grasp_state_ == GraspState::Release)
+    {
+        /* Object release .*/
+        grasp_joints_hand_->set_positions(home_hand_joints_, grasp_hand_joints_vels_, hand_considered_joints_);
+        yInfo() << "[Grasp][Release -> WaitRelease]";
+
+        grasp_state_ = GraspState::WaitRelease;
+        start_counting(1.0);
+
+        return true;
+    }
+    else if (grasp_state_ == GraspState::WaitRelease)
+    {
+        if (is_elapsed_from_start_counting())
+        {
+            if (grasp_joints_hand_->check_motion_done(hand_considered_joints_))
+            {
+                yInfo() << log_name_ + "::execute_grasp(). Release done.";
+
+                yInfo() << "[Grasp][WaitRelease -> Done]";
+
+                grasp_state_ = GraspState::Done;
+
+                return true;
+            }
+            else
+                start_counting(1.0);
+        }
+
+        return true;
+    }
+    else if (grasp_state_ == GraspState::Done)
+    {
+        yInfo() << log_name_ + "::execute_grasp(). Cleaning up.";
+
+        gaze_->stop();
+        gaze_->controller().setTrackingMode(false);
+
+        grasp_cart_->stop();
+        grasp_cart_->controller().restoreContext(backup_grasp_context_);
+
+        grasp_cart_ = nullptr;
+        grasp_joints_hand_ = nullptr;
+    }
 
     return true;
 }

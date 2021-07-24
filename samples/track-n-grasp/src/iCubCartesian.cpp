@@ -62,6 +62,15 @@ void iCubCartesian::close()
 }
 
 
+bool iCubCartesian::check_motion_done()
+{
+    bool done;
+    controller_->checkMotionDone(&done);
+
+    return done;
+}
+
+
 yarp::dev::ICartesianControl& iCubCartesian::controller()
 {
     return *controller_;

@@ -56,6 +56,8 @@ private:
 
     bool is_pose_grasp_safe(const Eigen::Transform<double, 3, Eigen::Affine>& pose);
 
+    bool is_position_cart_safe(const yarp::sig::Vector& position);
+
     bool is_object_steady(const Eigen::Vector3d& velocity);
 
     /**
@@ -64,6 +66,13 @@ private:
     double get_rx_elapsed_time();
 
     void set_rx_time();
+
+    /**
+     * Timer counting for the main state machine of the module.
+     */
+    void start_counting(const double& total_time);
+
+    bool is_elapsed_from_start_counting();
 
     /**
      * Send an RPC message.
@@ -123,10 +132,12 @@ private:
     Eigen::VectorXd home_arm_joints_;
     Eigen::VectorXd home_hand_joints_;
     Eigen::VectorXd pregrasp_hand_joints_;
+    Eigen::VectorXd grasp_hand_joints_;
     Eigen::VectorXd home_torso_joints_vels_;
     Eigen::VectorXd home_arm_joints_vels_;
     Eigen::VectorXd home_hand_joints_vels_;
     Eigen::VectorXd pregrasp_hand_joints_vels_;
+    Eigen::VectorXd grasp_hand_joints_vels_;
 
     const std::vector<std::string> home_torso_considered_joints_ =
     {
@@ -218,9 +229,46 @@ private:
     /**
      * Module state.
      */
-    enum class State { Idle, GoHome, Grasp, PostGraspFailure, PostGraspSuccess, Tracking, WaitForFeedback };
+    enum class State { Idle, GoHome, Grasp, Tracking, WaitForFeedback, WaitForHome };
 
     State state_ = State::Idle;
+
+    std::chrono::steady_clock::time_point time_0_;
+
+    double total_time_;
+
+    /**
+     * Grasp state.
+     */
+    enum class GraspState
+    {
+        Idle,
+        Evaluation, WaitHandPregrasp,
+        ArmPregrasp, WaitArmPregrasp,
+        ArmReach, WaitArmReach,
+        Grasp, WaitGrasp,
+        Lift, WaitLift, WaitAfterLift,
+        Release, WaitRelease,
+        Done
+    };
+
+    GraspState grasp_state_ = GraspState::Idle;
+
+    std::shared_ptr<iCubCartesian> grasp_cart_;
+
+    std::shared_ptr<iCubMotorsPositions> grasp_joints_hand_;
+
+    int backup_grasp_context_;
+
+    int grasp_context_;
+
+    yarp::sig::Vector grasp_target_position_;
+
+    yarp::sig::Vector grasp_target_orientation_;
+
+    yarp::sig::Vector grasp_center_;
+
+    std::string grasp_type_;
 
     /**
      * Name for log messages.

@@ -123,18 +123,19 @@ public:
         const auto sector_end = std::atan2(std::abs(p_thumb[2]), p_thumb[0]);
 
         // account for safety margin due to ring and little fingers that might hamper the approach
-        for (size_t i = 3; i < fingers.size(); i++) {
-            auto& finger = fingers[i];
-            for (size_t link = 0; link < finger->getN(); link++) {
-                auto v = fingers[i]->Position(link);
-                auto ang = std::atan2(std::abs(v[2]), v[0]);
-                if ((ang >= sector_beg) && (ang <= sector_end)) {
-                    v[1] = 0.;
-                    approach_min_distance = std::max(yarp::math::norm(v), approach_min_distance);
-                }
-            }
-        }
-        approach_min_distance += .005;
+        // for (size_t i = 3; i < fingers.size(); i++) {
+        //     auto& finger = fingers[i];
+        //     for (size_t link = 0; link < finger->getN(); link++) {
+        //         auto v = fingers[i]->Position(link);
+        //         auto ang = std::atan2(std::abs(v[2]), v[0]);
+        //         if ((ang >= sector_beg) && (ang <= sector_end)) {
+        //             v[1] = 0.;
+        //             approach_min_distance = std::max(yarp::math::norm(v), approach_min_distance);
+        //         }
+        //     }
+        // }
+        // approach_min_distance += .005;
+        approach_min_distance = 0.02;
 
         // use little finger to account for safety margin to avoid hitting the table when side-grasping
         // hand_half_height = fingers.back()->EndEffPosition()[1] + .01;

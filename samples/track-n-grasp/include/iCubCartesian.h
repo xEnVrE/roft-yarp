@@ -25,6 +25,8 @@ public:
 
     void close();
 
+    bool check_motion_done();
+
     yarp::dev::ICartesianControl& controller();
 
     bool enable_torso(const bool& enable_yaw, const bool& enable_pitch, const bool& enable_roll);
