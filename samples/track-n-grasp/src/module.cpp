@@ -160,11 +160,11 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     grasp_hand_joints_(0) = 45.0;
     grasp_hand_joints_(1) = 80.0;
     grasp_hand_joints_(2) = 40.0;
-    grasp_hand_joints_(3) = 40.0;
-    grasp_hand_joints_(4) = 40.0;
+    grasp_hand_joints_(3) = 35.0;
+    grasp_hand_joints_(4) = 60.0;
     grasp_hand_joints_(5) = 40.0;
-    grasp_hand_joints_(6) = 40.0;
-    grasp_hand_joints_(7) = 35.0;
+    grasp_hand_joints_(6) = 60.0;
+    grasp_hand_joints_(7) = 40.0;
     grasp_hand_joints_(8) = 100.0;
     /* Set hand joints for post grasp configuration. */
     postgrasp_hand_joints_ = home_hand_joints_;
@@ -175,6 +175,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     home_arm_joints_vels_ = VectorXd::Ones(home_arm_joints_.size()) * 10.0;
     /* Set joints velocities for hand home configuration to 100.0 deg/s. */
     home_hand_joints_vels_ = VectorXd::Ones(home_hand_joints_.size()) * 100.0;
+    home_hand_joints_vels_(1) = 50.0;
     /* Set hand joints velocities for pregrasp. */
     pregrasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 100.0;
     grasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 100.0;
