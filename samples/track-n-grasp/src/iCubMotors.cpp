@@ -147,7 +147,7 @@ bool iCubMotors::set_mode(const int& mode, const std::vector<std::string>& consi
         ok &= (modes_.at(part)->setControlModes(joints.at(part).size(), joints.at(part).data(), control_modes.at(part).data()));
 
         if (!ok)
-            yError() << log_name_ << "::set_mode. Cannot set mode for part " << part;
+            yError() << log_name_ << "::set_mode. Cannot set mode for part" << part;
     }
 
     return ok;
