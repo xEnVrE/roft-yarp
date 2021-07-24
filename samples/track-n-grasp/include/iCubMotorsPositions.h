@@ -30,6 +30,8 @@ public:
 
     bool set_positions(const Eigen::VectorXd& positions, const Eigen::VectorXd& reference_velocities, const std::vector<std::string>& considered_joints);
 
+    bool check_motion_done(const std::vector<std::string>& considered_joints);
+
 private:
     /**
      * View.

@@ -78,9 +78,15 @@ private:
     void go_home_hand();
 
     /**
+     * Grasping.
+     */
+
+    bool execute_grasp(const Eigen::Transform<double, 3, Eigen::Affine>& pose);
+
+    /**
      * iCub gaze controller.
      */
-    std::unique_ptr<iCubGaze> gaze_;
+    std::shared_ptr<iCubGaze> gaze_;
 
     bool enable_gaze_limit_x_;
     bool enable_gaze_limit_y_;
@@ -93,11 +99,10 @@ private:
     /**
      * iCub Cartesian controllers.
      */
-    std::unique_ptr<iCubCartesian> cart_left_;
-    std::unique_ptr<iCubCartesian> cart_right_;
+    std::shared_ptr<iCubCartesian> cart_left_;
+    std::shared_ptr<iCubCartesian> cart_right_;
 
     double approach_traj_time_;
-    double grasp_traj_time_;
     double grasp_limit_x_lower_;
     double grasp_limit_x_upper_;
     double grasp_limit_y_lower_;
@@ -108,18 +113,20 @@ private:
     /**
      * iCub joint controllers.
      */
-    std::unique_ptr<iCubMotorsPositions> joints_left_arm_;
-    std::unique_ptr<iCubMotorsPositions> joints_right_arm_;
-    std::unique_ptr<iCubMotorsPositions> joints_torso_;
-    std::unique_ptr<iCubMotorsPositions> joints_left_hand_;
-    std::unique_ptr<iCubMotorsPositions> joints_right_hand_;
+    std::shared_ptr<iCubMotorsPositions> joints_left_arm_;
+    std::shared_ptr<iCubMotorsPositions> joints_right_arm_;
+    std::shared_ptr<iCubMotorsPositions> joints_torso_;
+    std::shared_ptr<iCubMotorsPositions> joints_left_hand_;
+    std::shared_ptr<iCubMotorsPositions> joints_right_hand_;
 
     Eigen::VectorXd home_torso_joints_;
     Eigen::VectorXd home_arm_joints_;
     Eigen::VectorXd home_hand_joints_;
+    Eigen::VectorXd pregrasp_hand_joints_;
     Eigen::VectorXd home_torso_joints_vels_;
     Eigen::VectorXd home_arm_joints_vels_;
     Eigen::VectorXd home_hand_joints_vels_;
+    Eigen::VectorXd pregrasp_hand_joints_vels_;
 
     const std::vector<std::string> home_torso_considered_joints_ =
     {
@@ -139,6 +146,12 @@ private:
         "hand_middle_proximal", "hand_middle_distal",
         "hand_little"
     };
+    const std::vector<std::string> hand_considered_joints_ = home_hand_considered_joints_;
+
+    /**
+     * Objects name.
+     */
+    std::string object_name_ = "006_mustard_bottle";
 
     /**
      * Objects short name to long name mapping.
@@ -151,6 +164,8 @@ private:
     yarp::os::BufferedPort<yarp::sig::Vector> port_state_;
 
     Eigen::Transform<double, 3, Eigen::Affine> last_object_pose_;
+
+    Eigen::Transform<double, 3, Eigen::Affine> grasp_object_pose_;
 
     Eigen::Vector3d last_object_velocity_;
 
@@ -203,7 +218,7 @@ private:
     /**
      * Module state.
      */
-    enum class State { Approach, Idle, WaitForFeedback, GoHome, Tracking };
+    enum class State { Idle, GoHome, Grasp, PostGraspFailure, PostGraspSuccess, Tracking, WaitForFeedback };
 
     State state_ = State::Idle;
 

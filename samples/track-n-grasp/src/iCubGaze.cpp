@@ -57,6 +57,12 @@ void iCubGaze::close()
 }
 
 
+yarp::dev::IGazeControl& iCubGaze::controller()
+{
+    return *gaze_;
+}
+
+
 bool iCubGaze::look_at(const Vector& target)
 {
     return gaze_->lookAtFixationPointSync(target);

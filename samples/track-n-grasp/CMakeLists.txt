@@ -17,9 +17,9 @@ find_package(YARP REQUIRED COMPONENTS
                            sig
 )
 
-# find_package(ICUB REQUIRED COMPONENTS
-#                            iKin
-# )
+find_package(ICUB REQUIRED COMPONENTS
+                           iKin
+)
 
 # Eigen
 find_package(Eigen3 REQUIRED)
@@ -34,6 +34,7 @@ yarp_add_idl(${EXE_TARGET_NAME}_THRIFT_SRC ${${EXE_TARGET_NAME}_THRIFT_HDR})
 
 # Executable
 add_executable(${EXE_TARGET_NAME}
+               include/cardinal_points_grasp.h
                include/module.h
                include/iCubCartesian.h
                include/iCubGaze.h
@@ -54,6 +55,7 @@ target_include_directories(${EXE_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR
 
 target_link_libraries(${EXE_TARGET_NAME} PRIVATE
                                          Eigen3::Eigen
+                                         ICUB::iKin
                                          YARP::YARP_dev
                                          YARP::YARP_eigen
                                          YARP::YARP_init

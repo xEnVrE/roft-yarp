@@ -21,6 +21,8 @@ public:
 
     void close();
 
+    yarp::dev::IGazeControl& controller();
+
     bool look_at(const yarp::sig::Vector& target);
 
     bool look_at_stream(const yarp::sig::Vector& target);

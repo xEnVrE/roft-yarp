@@ -62,6 +62,13 @@ void iCubCartesian::close()
 }
 
 
+yarp::dev::ICartesianControl& iCubCartesian::controller()
+{
+    return *controller_;
+}
+
+
+
 bool iCubCartesian::enable_torso(const bool& enable_yaw, const bool& enable_pitch, const bool& enable_roll)
 {
     yarp::sig::Vector current_dof;
@@ -116,53 +123,35 @@ bool iCubCartesian::enable_torso_limits(const std::string& torso_part, const dou
 }
 
 
-bool iCubCartesian::go_to_pose
-(
-    const yarp::sig::Vector& position,
-    const yarp::sig::Vector& orientation,
-    const double& trajectory_time
-)
+bool iCubCartesian::go_to_pose(const yarp::sig::Vector& position, const yarp::sig::Vector& orientation)
 {
-    return controller_->goToPose(position, orientation, trajectory_time);
+    return controller_->goToPose(position, orientation);
 }
 
 
-bool iCubCartesian::go_to_pose_stream
-(
-    const yarp::sig::Vector& position,
-    const yarp::sig::Vector& orientation,
-    const double& trajectory_time
-)
+bool iCubCartesian::go_to_pose_stream(const yarp::sig::Vector& position, const yarp::sig::Vector& orientation)
 {
-    return controller_->goToPoseSync(position, orientation, trajectory_time);
+    return controller_->goToPoseSync(position, orientation);
 }
 
 
-bool iCubCartesian::go_to_position
-(
-    const yarp::sig::Vector& position,
-    const double& trajectory_time
-)
+bool iCubCartesian::go_to_position(const yarp::sig::Vector& position)
 {
     yarp::sig::Vector current_position;
     yarp::sig::Vector current_orientation;
     controller_->getPose(current_position, current_orientation);
 
-    return controller_->goToPose(position, current_orientation, trajectory_time);
+    return controller_->goToPose(position, current_orientation);
 }
 
 
-bool iCubCartesian::go_to_position_stream
-(
-    const yarp::sig::Vector& position,
-    const double& trajectory_time
-)
+bool iCubCartesian::go_to_position_stream(const yarp::sig::Vector& position)
 {
     yarp::sig::Vector current_position;
     yarp::sig::Vector current_orientation;
     controller_->getPose(current_position, current_orientation);
 
-    return controller_->goToPoseSync(position, current_orientation, trajectory_time);
+    return controller_->goToPoseSync(position, current_orientation);
 }
 
 

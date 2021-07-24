@@ -25,17 +25,19 @@ public:
 
     void close();
 
+    yarp::dev::ICartesianControl& controller();
+
     bool enable_torso(const bool& enable_yaw, const bool& enable_pitch, const bool& enable_roll);
 
     bool enable_torso_limits(const std::string& torso_part, const double& min, const double& max);
 
-    bool go_to_pose(const yarp::sig::Vector& position, const yarp::sig::Vector& orientation, const double& trajectory_time);
+    bool go_to_pose(const yarp::sig::Vector& position, const yarp::sig::Vector& orientation);
 
-    bool go_to_pose_stream(const yarp::sig::Vector& position, const yarp::sig::Vector& orientation, const double& trajectory_time);
+    bool go_to_pose_stream(const yarp::sig::Vector& position, const yarp::sig::Vector& orientation);
 
-    bool go_to_position(const yarp::sig::Vector& position, const double& trajectory_time);
+    bool go_to_position(const yarp::sig::Vector& position);
 
-    bool go_to_position_stream(const yarp::sig::Vector& position, const double& trajectory_time);
+    bool go_to_position_stream(const yarp::sig::Vector& position);
 
     bool restore_context();
 

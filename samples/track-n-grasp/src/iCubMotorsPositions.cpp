@@ -142,3 +142,41 @@ bool iCubMotorsPositions::set_positions(const VectorXd& positions, const VectorX
 
     return ok;
 }
+
+
+bool iCubMotorsPositions::check_motion_done(const std::vector<std::string>& considered_joints)
+{
+    std::unordered_map<std::string, std::vector<int>> joints;
+
+    for (const auto& part : enabled_parts_)
+        joints[part] = std::vector<int>(0);
+
+    for (std::size_t i = 0; i < considered_joints.size(); i++)
+    {
+        const std::string joint_name = considered_joints.at(i);
+        const auto& map = name_to_index_.at(joint_name);
+        joints.at(map.first).push_back(map.second);
+    }
+
+    bool ok = true;
+    bool done = true;
+    for (const auto& part : enabled_parts_)
+    {
+        bool done_part;
+
+        if (joints.at(part).size() == 0)
+            continue;
+
+        ok &= (controllers_.at(part)->checkMotionDone(joints.at(part).size(), joints.at(part).data(), &done_part));
+        if (!ok)
+        {
+            yError() << log_name() << "::check_motion_done(). Cannot check if motion is done for part " << part;
+
+            return false;
+        }
+
+        done &= done_part;
+    }
+
+    return done;
+}
