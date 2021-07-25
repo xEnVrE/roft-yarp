@@ -188,7 +188,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     if (enable_part_left)
     {
         cart_left_ = std::make_shared<iCubCartesian>(robot, "left", log_name_);
-        cart_left_->enable_torso(true, true, false);
+        cart_left_->enable_torso(true, true, true);
         cart_left_->enable_torso_limits("pitch", torso_pitch_min, torso_pitch_max);
         cart_left_->enable_torso_limits("roll", torso_roll_min, torso_roll_max);
 
@@ -198,7 +198,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     if (enable_part_right)
     {
         cart_right_ = std::make_shared<iCubCartesian>(robot, "right", log_name_);
-        cart_right_->enable_torso(true, true, false);
+        cart_right_->enable_torso(true, true, true);
         cart_right_->enable_torso_limits("pitch", torso_pitch_min, torso_pitch_max);
         cart_right_->enable_torso_limits("roll", torso_roll_min, torso_roll_max);
 
