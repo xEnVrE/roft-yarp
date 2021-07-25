@@ -140,7 +140,9 @@ private:
     Eigen::VectorXd postgrasp_hand_joints_;
     Eigen::VectorXd home_hand_joints_vels_;
     Eigen::VectorXd pregrasp_hand_joints_vels_;
-    Eigen::VectorXd grasp_hand_joints_vels_;
+    Eigen::VectorXd grasp_hand_joints_vels_left_;
+    Eigen::VectorXd grasp_hand_joints_vels_right_;
+    Eigen::VectorXd postgrasp_hand_joints_vels_;
 
     const std::vector<std::string> home_torso_considered_joints_ =
     {

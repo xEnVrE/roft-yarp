@@ -93,6 +93,20 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
         yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::pregrasp_hand_joints";
         return false;
     }
+    Vector hand_joint_grasp_vels_left;
+    std::tie(is_vector, hand_joint_grasp_vels_left) = load_vector_double(rf_joint_control, "left_grasp_vels", 9);
+    if (!is_vector)
+    {
+        yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::left_grasp_vels";
+        return false;
+    }
+    Vector hand_joint_grasp_vels_right;
+    std::tie(is_vector, hand_joint_grasp_vels_right) = load_vector_double(rf_joint_control, "right_grasp_vels", 9);
+    if (!is_vector)
+    {
+        yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::right_grasp_vels";
+        return false;
+    }
 
     const Bottle rf_parts = rf.findGroup("PARTS");
     bool enable_part_left = rf_parts.check("left", Value(false)).asBool();
@@ -206,9 +220,12 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     home_hand_joints_vels_ = VectorXd::Ones(home_hand_joints_.size()) * 100.0;
     home_hand_joints_vels_(1) = 50.0;
 
-    /* Set hand joints velocities for pregrasp. */
+    /* Set hand joints velocities for {pre, ,post}grasp. */
     pregrasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 100.0;
-    grasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 100.0;
+    pregrasp_hand_joints_vels_(1) = 50.0;
+    postgrasp_hand_joints_vels_ = pregrasp_hand_joints_vels_;
+    grasp_hand_joints_vels_left_ = toEigen(hand_joint_grasp_vels_left);
+    grasp_hand_joints_vels_right_ = toEigen(hand_joint_grasp_vels_right);
 
     return true;
 }
@@ -878,7 +895,8 @@ bool Module::execute_grasp(const Pose& pose)
         /* Hand grasp configuration .*/
 
         VectorXd grasp_hand_joints = (grasp_type_ == "left") ? grasp_hand_joints_left_ : grasp_hand_joints_right_;
-        grasp_joints_hand_->set_positions(grasp_hand_joints, grasp_hand_joints_vels_, hand_considered_joints_);
+        VectorXd grasp_hand_joints_vels = (grasp_type_ == "left") ? grasp_hand_joints_vels_left_ : grasp_hand_joints_vels_right_;
+        grasp_joints_hand_->set_positions(grasp_hand_joints, grasp_hand_joints_vels, hand_considered_joints_);
 
         yInfo() << "[Grasp][Grasp -> WaitGrasp]";
 
@@ -970,7 +988,7 @@ bool Module::execute_grasp(const Pose& pose)
     else if (grasp_state_ == GraspState::Release)
     {
         /* Object release .*/
-        grasp_joints_hand_->set_positions(postgrasp_hand_joints_, grasp_hand_joints_vels_, hand_considered_joints_);
+        grasp_joints_hand_->set_positions(postgrasp_hand_joints_, postgrasp_hand_joints_vels_, hand_considered_joints_);
         yInfo() << "[Grasp][Release -> WaitRelease]";
 
         grasp_state_ = GraspState::WaitRelease;
