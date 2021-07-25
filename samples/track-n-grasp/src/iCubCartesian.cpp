@@ -49,8 +49,6 @@ iCubCartesian::iCubCartesian
     /* Cartesian Controller configuration. */
     controller_->storeContext(&initial_context_);
     controller_->setTrajTime(5.0);
-
-
 }
 
 
