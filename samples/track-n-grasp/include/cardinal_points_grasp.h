@@ -170,7 +170,10 @@ public:
 
         // sizes of objects
         sizes["003_cracker_box"] = Eigen::Vector3d::Zero();
-        sizes.at("003_cracker_box")(0) = 0.0718;
+        // sizes.at("003_cracker_box")(0) = 0.0718;
+        // pretend that this is thinner than real
+        sizes.at("003_cracker_box")(0) = 0.04;
+        //
         sizes.at("003_cracker_box")(1) = 0.1640;
         sizes.at("003_cracker_box")(2) = 0.2134;
 
