@@ -216,6 +216,13 @@ public:
         yarp::sig::Vector center(3);
         yarp::eigen::toEigen(center) = center_eigen;
 
+        // Take into account object pointing downwards (according to DOPE reference frame)
+        Eigen::Vector3d y_axis = rotation.col(1);
+        if (abs(std::acos(y_axis.dot(Eigen::Vector3d::UnitZ()))) < M_PI / 2.0)
+        {
+            rotation = rotation * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX()).toRotationMatrix();
+        }
+
         // Take into account DOPE reference frame
         Eigen::Matrix3d rot_offset_0 = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitX()).toRotationMatrix();
         Eigen::Matrix3d rot_offset_1 = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitZ()).toRotationMatrix();
