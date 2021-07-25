@@ -59,10 +59,38 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     const Bottle rf_joint_control = rf.findGroup("JOINT_CONTROL");
     bool is_vector;
     Vector arm_joint_home_configuration;
-    std::tie(is_vector, arm_joint_home_configuration) = load_vector_double(rf_joint_control, "home_configuration", 7);
+    std::tie(is_vector, arm_joint_home_configuration) = load_vector_double(rf_joint_control, "home_arm_joints", 7);
     if (!is_vector)
     {
-        yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::home_configuration";
+        yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::home_arm_joints";
+        return false;
+    }
+    Vector hand_joint_grasp_configuration_left;
+    std::tie(is_vector, hand_joint_grasp_configuration_left) = load_vector_double(rf_joint_control, "left_grasp_joints", 9);
+    if (!is_vector)
+    {
+        yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::left_grasp_joints";
+        return false;
+    }
+    Vector hand_joint_grasp_configuration_right;
+    std::tie(is_vector, hand_joint_grasp_configuration_right) = load_vector_double(rf_joint_control, "right_grasp_joints", 9);
+    if (!is_vector)
+    {
+        yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::right_grasp_joints";
+        return false;
+    }
+    Vector hand_joint_home_configuration;
+    std::tie(is_vector, hand_joint_home_configuration) = load_vector_double(rf_joint_control, "home_hand_joints", 9);
+    if (!is_vector)
+    {
+        yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::home_hand_joints";
+        return false;
+    }
+    Vector hand_joint_pregrasp_configuration;
+    std::tie(is_vector, hand_joint_pregrasp_configuration) = load_vector_double(rf_joint_control, "pregrasp_hand_joints", 9);
+    if (!is_vector)
+    {
+        yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::pregrasp_hand_joints";
         return false;
     }
 
@@ -152,39 +180,32 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
             cart_right_->enable_arm_limits("wrist_pitch", wrist_pitch_min, wrist_pitch_max);
     }
 
-    /* Set joints for home configuration. */
+    /* Set torso/arm joints for home configuration. */
     home_torso_joints_ = Vector3d::Zero();
     home_arm_joints_ = toEigen(arm_joint_home_configuration);
-    home_hand_joints_ = VectorXd::Zero(9);
-    /* iCub joint 'hand_finger' */
-    home_hand_joints_(0) = 45.0;
-    /* iCub joint 'thumb_opposition' */
-    home_hand_joints_(1) = 10.0;
-    /* Set hand joints for pregrasp configuration. */
-    pregrasp_hand_joints_ = VectorXd::Zero(9);
-    pregrasp_hand_joints_(0) = 45.0;
-    pregrasp_hand_joints_(1) = 80.0;
-    /* Set hand joints for grasp configuration. */
-    grasp_hand_joints_ = VectorXd::Zero(9);
-    grasp_hand_joints_(0) = 45.0;
-    grasp_hand_joints_(1) = 80.0;
-    grasp_hand_joints_(2) = 40.0;
-    grasp_hand_joints_(3) = 35.0;
-    grasp_hand_joints_(4) = 60.0;
-    grasp_hand_joints_(5) = 40.0;
-    grasp_hand_joints_(6) = 60.0;
-    grasp_hand_joints_(7) = 40.0;
-    grasp_hand_joints_(8) = 100.0;
+
+    /* Set hand joints for home configuration. */
+    home_hand_joints_ = toEigen(hand_joint_home_configuration);
+
+    /* Set hand joints for post grasp configuration. */
+    pregrasp_hand_joints_ = toEigen(hand_joint_pregrasp_configuration);
+
     /* Set hand joints for post grasp configuration. */
     postgrasp_hand_joints_ = home_hand_joints_;
     postgrasp_hand_joints_(1) = 80.0;
 
-    /* Set joints velocities for arm home configuration to 5.0 deg/s. */
+    /* Set hand joints for grasp configuration. */
+    grasp_hand_joints_left_ = toEigen(hand_joint_grasp_configuration_left);
+    grasp_hand_joints_right_ = toEigen(hand_joint_grasp_configuration_right);
+
+    /* Set joints velocities fortorso/ arm home configuration to 5.0 deg/s. */
     home_torso_joints_vels_ = VectorXd::Ones(home_torso_joints_.size()) * 10.0;
     home_arm_joints_vels_ = VectorXd::Ones(home_arm_joints_.size()) * 10.0;
+
     /* Set joints velocities for hand home configuration to 100.0 deg/s. */
     home_hand_joints_vels_ = VectorXd::Ones(home_hand_joints_.size()) * 100.0;
     home_hand_joints_vels_(1) = 50.0;
+
     /* Set hand joints velocities for pregrasp. */
     pregrasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 100.0;
     grasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 100.0;
@@ -855,7 +876,9 @@ bool Module::execute_grasp(const Pose& pose)
     else if (grasp_state_ == GraspState::Grasp)
     {
         /* Hand grasp configuration .*/
-        grasp_joints_hand_->set_positions(grasp_hand_joints_, grasp_hand_joints_vels_, hand_considered_joints_);
+
+        VectorXd grasp_hand_joints = (grasp_type_ == "left") ? grasp_hand_joints_left_ : grasp_hand_joints_right_;
+        grasp_joints_hand_->set_positions(grasp_hand_joints, grasp_hand_joints_vels_, hand_considered_joints_);
 
         yInfo() << "[Grasp][Grasp -> WaitGrasp]";
 
