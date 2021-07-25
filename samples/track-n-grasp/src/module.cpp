@@ -36,6 +36,9 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     approach_traj_time_ = rf_cartesian_control.check("approach_traj_time", Value(5.0)).asDouble();
     double torso_pitch_max = rf_cartesian_control.check("torso_pitch_max", Value(10.0)).asDouble();
     double torso_pitch_min = rf_cartesian_control.check("torso_pitch_min", Value(-10.0)).asDouble();
+    double torso_roll_max = rf_cartesian_control.check("torso_roll_max", Value(30.0)).asDouble();
+    double torso_roll_min = rf_cartesian_control.check("torso_roll_min", Value(-30.0)).asDouble();
+
     bool enable_wrist_limits = rf_cartesian_control.check("enable_wrist_limits", Value(false)).asBool();
     double wrist_pitch_max = rf_cartesian_control.check("wrist_pitch_max", Value(20.0)).asDouble();
     double wrist_pitch_min = rf_cartesian_control.check("wrist_pitch_min", Value(-80.0)).asDouble();
@@ -187,6 +190,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
         cart_left_ = std::make_shared<iCubCartesian>(robot, "left", log_name_);
         cart_left_->enable_torso(true, true, false);
         cart_left_->enable_torso_limits("pitch", torso_pitch_min, torso_pitch_max);
+        cart_left_->enable_torso_limits("roll", torso_roll_min, torso_roll_max);
 
         if (enable_wrist_limits)
             cart_left_->enable_arm_limits("wrist_pitch", wrist_pitch_min, wrist_pitch_max);
@@ -196,6 +200,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
         cart_right_ = std::make_shared<iCubCartesian>(robot, "right", log_name_);
         cart_right_->enable_torso(true, true, false);
         cart_right_->enable_torso_limits("pitch", torso_pitch_min, torso_pitch_max);
+        cart_right_->enable_torso_limits("roll", torso_roll_min, torso_roll_max);
 
         if (enable_wrist_limits)
             cart_right_->enable_arm_limits("wrist_pitch", wrist_pitch_min, wrist_pitch_max);
