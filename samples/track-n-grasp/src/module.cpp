@@ -31,6 +31,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     /* Get parameters. */
     const std::string robot = rf.check("robot", Value("icub")).asString();
     frequency_ = rf.check("frequency", Value(30)).asInt();
+    use_face_expression_ = rf.check("use_face_expression", Value(false)).asBool();
 
     const Bottle rf_cartesian_control = rf.findGroup("CARTESIAN_CONTROL");
     approach_traj_time_ = rf_cartesian_control.check("approach_traj_time", Value(5.0)).asDouble();
@@ -174,6 +175,17 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
+    /* Open port for face expression. */
+    if (use_face_expression_)
+    {
+        if (!port_face_.open("/" + log_name_ + "/face_expression:o"))
+        {
+            yError() << log_name_ + "::configure. Error: cannot open port for face expression.";
+
+            return false;
+        }
+    }
+
     /* Objects maps. */
     objects_map_["o003"] = "003_cracker_box";
     objects_map_["o004"] = "004_sugar_box";
@@ -302,6 +314,9 @@ bool Module::close()
     port_rpc_segm_.close();
     port_rpc_pose_est_.close();
     port_rpc_trk_.close();
+    port_state_.close();
+    if (use_face_expression_)
+        port_face_.close();
 
     return true;
 }
@@ -328,8 +343,8 @@ bool Module::updateModule()
     if (valid_pose)
         set_rx_time();
 
-    /* Update face expression. */
-    // missing
+    /* Default face type. */
+    std::string face_type = "hap";
 
     /* State machine. */
     if (state_ == State::Idle)
@@ -408,7 +423,7 @@ bool Module::updateModule()
                 else
                 {
                     /* Update face expression. */
-                    // missing
+                    face_type = "sad";
                 }
             }
         }
@@ -429,6 +444,9 @@ bool Module::updateModule()
             state_ = State::WaitForFeedback;
         }
     }
+
+    if (use_face_expression_)
+        set_face_expression(face_type);
 
     return true;
 }
@@ -1114,4 +1132,32 @@ bool Module::execute_grasp(const Pose& pose)
     }
 
     return true;
+}
+
+
+void Module::set_face_expression(const std::string& type)
+{
+    Bottle in, out;
+
+    out.addVocab(Vocab::encode("set"));
+    out.addVocab(Vocab::encode("mou"));
+    out.addVocab(Vocab::encode(type));
+    // port_face_.write(out,in);
+    port_face_.write(out);
+
+    out.clear();
+
+    out.addVocab(Vocab::encode("set"));
+    out.addVocab(Vocab::encode("leb"));
+    out.addVocab(Vocab::encode(type));
+    // port_face_.write(out,in);
+    port_face_.write(out);
+
+    out.clear();
+
+    out.addVocab(Vocab::encode("set"));
+    out.addVocab(Vocab::encode("reb"));
+    out.addVocab(Vocab::encode(type));
+    port_face_.write(out);
+    // port_face_.write(out,in);
 }

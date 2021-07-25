@@ -89,8 +89,12 @@ private:
     /**
      * Grasping.
      */
-
     bool execute_grasp(const Eigen::Transform<double, 3, Eigen::Affine>& pose);
+
+    /**
+     * Face expression handling.
+     */
+    void set_face_expression(const std::string& type);
 
     /**
      * iCub gaze controller.
@@ -219,6 +223,13 @@ private:
     double obj_ss_time_thr_;
 
     std::chrono::steady_clock::time_point obj_ss_start_time_;
+
+    /**
+     * Face expression.
+     */
+    yarp::os::Port port_face_;
+
+    bool use_face_expression_;
 
     /**
      * RPC ports.
