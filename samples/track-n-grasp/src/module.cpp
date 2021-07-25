@@ -752,23 +752,10 @@ bool Module::execute_grasp(const Pose& pose)
 {
     if (grasp_state_ == GraspState::Evaluation)
     {
-        /* Keep gazing at the object. */
-        gaze_->controller().setTrackingMode(true);
-        Vector target(3);
-        target(0) = pose.translation()(0);
-        target(1) = pose.translation()(1);
-        target(2) = pose.translation()(2);
-        gaze_->look_at_stream(target);
-
         /* Cardinal points grasp strategy. */
 
         if ((cart_left_ == nullptr) && (cart_right_ == nullptr))
-        {
-            gaze_->stop();
-            gaze_->controller().setTrackingMode(false);
-
             return false;
-        }
 
         std::vector<cardinal_points_grasp::rankable_candidate> candidates;
         std::vector<cardinal_points_grasp::rankable_candidate> candidates_l;
@@ -801,11 +788,7 @@ bool Module::execute_grasp(const Pose& pose)
 
         if (candidates.empty())
         {
-            gaze_->stop();
-            gaze_->controller().setTrackingMode(false);
-
             yError() << log_name_ << "::execute_grasp(). No valid grasping candidates.";
-
             return false;
         }
 
@@ -838,13 +821,17 @@ bool Module::execute_grasp(const Pose& pose)
 
         if ((grasp_cart_ == nullptr) || (grasp_joints_hand_ == nullptr))
         {
-            gaze_->stop();
-            gaze_->controller().setTrackingMode(false);
-
             yError() << log_name_ << "::execute_grasp. Unexpected state. Either the cartesian or joints driver pointers are nullptr";
-
             return false;
         }
+
+        /* Keep gazing at the object. */
+        gaze_->controller().setTrackingMode(true);
+        Vector target(3);
+        target(0) = pose.translation()(0);
+        target(1) = pose.translation()(1);
+        target(2) = pose.translation()(2);
+        gaze_->look_at_stream(target);
 
         /* Cartesian configuration .*/
         grasp_cart_->controller().stopControl();
