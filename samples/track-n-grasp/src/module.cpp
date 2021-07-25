@@ -1000,7 +1000,13 @@ bool Module::execute_grasp(const Pose& pose)
     {
         /* Object lifting .*/
         const auto target = grasp_target_position_ + yarp::sig::Vector{0.0, 0.0, 0.1};
-        gaze_->look_at_stream(target);
+
+        /* Keep gazing at the object. */
+        Vector gaze_target(3);
+        gaze_target(0) = pose.translation()(0);
+        gaze_target(1) = pose.translation()(1);
+        gaze_target(2) = pose.translation()(2) + 0.1;
+        gaze_->look_at_stream(gaze_target);
 
         if (!is_position_cart_safe(target))
         {
