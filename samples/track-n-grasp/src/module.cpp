@@ -318,6 +318,10 @@ bool Module::updateModule()
     if (valid_pose)
         set_rx_time();
 
+    /* Update face expression. */
+    // missing
+
+    /* State machine. */
     if (state_ == State::Idle)
     {
         /* Restore gaze idle configuration. */
@@ -381,13 +385,21 @@ bool Module::updateModule()
                 gaze_->look_at_stream(target);
             }
 
-            if (is_object_steady(velocity) && is_pose_grasp_safe(pose))
+            if (is_object_steady(velocity))
             {
-                grasp_object_pose_ = pose;
-                grasp_state_ = GraspState::Evaluation;
+                if (is_pose_grasp_safe(pose))
+                {
+                    grasp_object_pose_ = pose;
+                    grasp_state_ = GraspState::Evaluation;
 
-                yInfo() << "[Tracking -> Grasp]";
-                state_ = State::Grasp;
+                    yInfo() << "[Tracking -> Grasp]";
+                    state_ = State::Grasp;
+                }
+                else
+                {
+                    /* Update face expression. */
+                    // missing
+                }
             }
         }
     }
