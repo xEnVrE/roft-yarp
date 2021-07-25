@@ -212,15 +212,15 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     grasp_hand_joints_left_ = toEigen(hand_joint_grasp_configuration_left);
     grasp_hand_joints_right_ = toEigen(hand_joint_grasp_configuration_right);
 
-    /* Set joints velocities fortorso/ arm home configuration to 5.0 deg/s. */
+    /* Set torso/arm joints velocities for home configuration. */
     home_torso_joints_vels_ = VectorXd::Ones(home_torso_joints_.size()) * 10.0;
     home_arm_joints_vels_ = VectorXd::Ones(home_arm_joints_.size()) * 10.0;
 
-    /* Set joints velocities for hand home configuration to 100.0 deg/s. */
+    /* Set hand joints velocities for home configuration. */
     home_hand_joints_vels_ = VectorXd::Ones(home_hand_joints_.size()) * 100.0;
     home_hand_joints_vels_(1) = 50.0;
 
-    /* Set hand joints velocities for {pre, ,post}grasp. */
+    /* Set hand joints velocities for {pre, ,post} grasp. */
     pregrasp_hand_joints_vels_ = VectorXd::Ones(pregrasp_hand_joints_.size()) * 100.0;
     pregrasp_hand_joints_vels_(1) = 50.0;
     postgrasp_hand_joints_vels_ = pregrasp_hand_joints_vels_;
