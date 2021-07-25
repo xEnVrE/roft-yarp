@@ -163,12 +163,23 @@ public:
 
         // offset due to non-centered frames in object meshes
         // valid for DOPE meshes only, written in DOPE reference frame
+        offsets["003_cracker_box"] = Eigen::Vector3d::Zero();
+        offsets["004_sugar_box"] = Eigen::Vector3d::Zero();
         offsets["006_mustard_bottle"] = Eigen::Vector3d::Zero();
         offsets.at("006_mustard_bottle")(1) = 0.005;
 
         // sizes of objects
-        sizes["006_mustard_bottle"] = Eigen::Vector3d::Zero();
+        sizes["003_cracker_box"] = Eigen::Vector3d::Zero();
+        sizes.at("003_cracker_box")(0) = 0.0718;
+        sizes.at("003_cracker_box")(1) = 0.1640;
+        sizes.at("003_cracker_box")(2) = 0.2134;
 
+        sizes["004_sugar_box"] = Eigen::Vector3d::Zero();
+        sizes.at("004_sugar_box")(0) = 0.0451;
+        sizes.at("004_sugar_box")(1) = 0.0927;
+        sizes.at("004_sugar_box")(2) = 0.1763;
+
+        sizes["006_mustard_bottle"] = Eigen::Vector3d::Zero();
         sizes.at("006_mustard_bottle")(0) = 0.0582;
         sizes.at("006_mustard_bottle")(1) = 0.0960;
         sizes.at("006_mustard_bottle")(2) = 0.1913;
