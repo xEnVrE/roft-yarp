@@ -200,9 +200,6 @@ public:
         opt3.addString("constr_tol"); opt2.addDouble(.000001);
         iarm->tweakSet(options);
         yarp::sig::Vector dof;
-        iarm->getDOF(dof);
-        dof = 1.;
-        iarm->setDOF(dof, dof);
 
         // retrieve object parameters
         const auto bx = sizes.at(object_name)(0) / 2;
