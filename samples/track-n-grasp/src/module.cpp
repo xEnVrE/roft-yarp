@@ -40,6 +40,13 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     double wrist_pitch_max = rf_cartesian_control.check("wrist_pitch_max", Value(20.0)).asDouble();
     double wrist_pitch_min = rf_cartesian_control.check("wrist_pitch_min", Value(-80.0)).asDouble();
 
+    cart_limit_x_lower_ = rf_cartesian_control.check("limit_x_lower", Value(-0.45)).asDouble();
+    cart_limit_x_upper_ = rf_cartesian_control.check("limit_x_upper", Value(-0.2)).asDouble();
+    cart_limit_y_lower_ = rf_cartesian_control.check("limit_y_lower", Value(-0.2)).asDouble();
+    cart_limit_y_upper_ = rf_cartesian_control.check("limit_y_upper", Value(0.2)).asDouble();
+    cart_limit_z_lower_ = rf_cartesian_control.check("limit_z_lower", Value(0.0)).asDouble();
+    cart_limit_z_upper_ = rf_cartesian_control.check("limit_z_upper", Value(0.3)).asDouble();
+
     const Bottle rf_gaze_limits = rf.findGroup("GAZE_LIMITS");
     enable_gaze_limit_x_ = rf_gaze_limits.check("enable_limit_x", Value(true)).asBool();
     enable_gaze_limit_y_ = rf_gaze_limits.check("enable_limit_y", Value(false)).asBool();
@@ -517,22 +524,40 @@ bool Module::is_pose_grasp_safe(const Pose& pose)
     const double& z = pose.translation()(2);
 
     if (x > grasp_limit_x_upper_)
+    {
+        // yError() << log_name_ << "::is_pose_grasp_safe(). Error on x:" << x << ">" << grasp_limit_x_upper_ ;
         return false;
+    }
 
     if (x < grasp_limit_x_lower_)
+    {
+        // yError() << log_name_ << "::is_pose_grasp_safe(). Error on x:" << x << "<" << grasp_limit_x_lower_ ;
         return false;
+    }
 
     if (y > grasp_limit_y_upper_)
+    {
+        // yError() << log_name_ << "::is_pose_grasp_safe(). Error on y:" << y << ">" << grasp_limit_y_upper_ ;
         return false;
+    }
 
     if (y < grasp_limit_y_lower_)
+    {
+        // yError() << log_name_ << "::is_pose_grasp_safe(). Error on y:" << y << "<" << grasp_limit_y_lower_ ;
         return false;
+    }
 
     if (z > grasp_limit_z_upper_)
+    {
+        // yError() << log_name_ << "::is_pose_grasp_safe(). Error on z:" << z << "<" << grasp_limit_z_upper_ ;
         return false;
+    }
 
     if (z < grasp_limit_z_lower_)
+    {
+        // yError() << log_name_ << "::is_pose_grasp_safe(). Error on z:" << z << "<" << grasp_limit_z_lower_ ;
         return false;
+    }
 
     return true;
 }
@@ -540,10 +565,47 @@ bool Module::is_pose_grasp_safe(const Pose& pose)
 
 bool Module::is_position_cart_safe(const yarp::sig::Vector& position)
 {
-    Pose pose;
-    pose = Translation<double, 3>(position[0], position[1], position[2]);
+    const double& x = position[0];
+    const double& y = position[1];
+    const double& z = position[2];
 
-    return is_pose_grasp_safe(pose);
+    if (x > cart_limit_x_upper_)
+    {
+        yError() << log_name_ << "::is_position_cart_safe(). Error on x:" << x << ">" << cart_limit_x_upper_ ;
+        return false;
+    }
+
+    if (x < cart_limit_x_lower_)
+    {
+        yError() << log_name_ << "::is_position_cart_safe(). Error on x:" << x << "<" << cart_limit_x_lower_ ;
+        return false;
+    }
+
+    if (y > cart_limit_y_upper_)
+    {
+        yError() << log_name_ << "::is_position_cart_safe(). Error on y:" << y << ">" << cart_limit_y_upper_ ;
+        return false;
+    }
+
+    if (y < cart_limit_y_lower_)
+    {
+        yError() << log_name_ << "::is_position_cart_safe(). Error on y:" << y << "<" << cart_limit_y_lower_ ;
+        return false;
+    }
+
+    if (z > cart_limit_z_upper_)
+    {
+        yError() << log_name_ << "::is_position_cart_safe(). Error on z:" << z << "<" << cart_limit_z_upper_ ;
+        return false;
+    }
+
+    if (z < cart_limit_z_lower_)
+    {
+        yError() << log_name_ << "::is_position_cart_safe(). Error on z:" << z << "<" << cart_limit_z_lower_ ;
+        return false;
+    }
+
+    return true;
 }
 
 

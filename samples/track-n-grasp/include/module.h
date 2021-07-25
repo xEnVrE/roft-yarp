@@ -112,6 +112,13 @@ private:
     std::shared_ptr<iCubCartesian> cart_right_;
 
     double approach_traj_time_;
+    double cart_limit_x_lower_;
+    double cart_limit_x_upper_;
+    double cart_limit_y_lower_;
+    double cart_limit_y_upper_;
+    double cart_limit_z_lower_;
+    double cart_limit_z_upper_;
+
     double grasp_limit_x_lower_;
     double grasp_limit_x_upper_;
     double grasp_limit_y_lower_;
