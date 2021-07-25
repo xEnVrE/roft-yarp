@@ -274,7 +274,9 @@ public:
         }
 
         // generate top-grasp candidates
-        const auto top = center + yarp::sig::Vector{0., 0., bz};
+        Eigen::Vector3d top_eigen = center_eigen + rotation * Eigen::Vector3d::UnitZ() * bz;
+        yarp::sig::Vector top(3);
+        yarp::eigen::toEigen(top) = top_eigen;
         for (size_t i = 0; i < side_points.size(); i++) {
             // prune by comparing the pre-grasp aperture with the SQ relative size
             if (((i & 0x01) && (2. * by < .5 * pregrasp_aperture)) ||
@@ -285,7 +287,10 @@ public:
                 yarp::sig::Vector axis_x(3);
                 yarp::eigen::toEigen(axis_x) = dir_eigen;
 
-                const yarp::sig::Vector axis_z{0., 0., hand == "right" ? -1.: 1.};
+                Eigen::Vector3d axis_z_eigen = (hand == "right" ? -1 : 1) * rotation.col(2);
+
+                yarp::sig::Vector axis_z(3);
+                yarp::eigen::toEigen(axis_z) = axis_z_eigen;
                 const auto axis_y = yarp::math::cross(axis_z, axis_x);
                 const auto candidate = composeCandidate(axis_x, axis_y, axis_z,
                                                         top + axis_y * dist_center_index_middle, {0., 0., 1.});
