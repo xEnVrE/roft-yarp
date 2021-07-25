@@ -49,6 +49,8 @@ iCubCartesian::iCubCartesian
     /* Cartesian Controller configuration. */
     controller_->storeContext(&initial_context_);
     controller_->setTrajTime(5.0);
+
+
 }
 
 
@@ -129,6 +131,12 @@ bool iCubCartesian::enable_torso_limits(const std::string& torso_part, const dou
     }
 
     return controller_->setLimits(axis, min, max);
+}
+
+
+bool iCubCartesian::enable_arm_limits(const std::string& arm_part, const double& min, const double& max)
+{
+    return controller_->setLimits(arm_joints_map_.at(arm_part), min, max);
 }
 
 

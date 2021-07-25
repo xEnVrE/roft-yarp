@@ -15,6 +15,7 @@
 #include <yarp/sig/Vector.h>
 
 #include <string>
+#include <unordered_map>
 
 
 class iCubCartesian
@@ -32,6 +33,8 @@ public:
     bool enable_torso(const bool& enable_yaw, const bool& enable_pitch, const bool& enable_roll);
 
     bool enable_torso_limits(const std::string& torso_part, const double& min, const double& max);
+
+    bool enable_arm_limits(const std::string& arm_part, const double& min, const double& max);
 
     bool go_to_pose(const yarp::sig::Vector& position, const yarp::sig::Vector& orientation);
 
@@ -51,6 +54,20 @@ private:
     yarp::os::Network yarp_;
 
     std::string laterality_;
+
+    /**
+     * Joint map.
+     */
+    std::unordered_map<std::string, std::size_t> arm_joints_map_ =
+    {
+        {"shoulder_pitch", 0 + 3},
+        {"shoulder_roll",  1 + 3},
+        {"shoulder_yaw",   2 + 3},
+        {"elbow",          3 + 3},
+        {"wrist_prosup",   4 + 3},
+        {"wrist_pitch",    5 + 3},
+        {"wrist_yaw",      6 + 3}
+     };
 
     /**
      * Driver.
