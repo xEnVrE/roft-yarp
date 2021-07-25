@@ -357,9 +357,9 @@ bool Module::updateModule()
 
         if(!execute_grasp(grasp_object_pose_))
         {
-            yInfo() << "[Grasp -> Idle]";
+            yInfo() << "[Grasp -> WaitForFeedback]";
 
-            state_ = State::Idle;
+            state_ = State::WaitForFeedback;
         }
     }
     else if (state_ == State::Tracking)
