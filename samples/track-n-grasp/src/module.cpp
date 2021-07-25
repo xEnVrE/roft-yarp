@@ -461,7 +461,7 @@ std::string Module::select_object(const std::string& object_name)
         return reply;
     }
 
-    object_name_ = object_name;
+    object_name_ = objects_map_.at(object_name);
 
     send_rpc(port_rpc_segm_, {"select_object", objects_map_.at(object_name)});
     std::this_thread::sleep_for(100ms);
