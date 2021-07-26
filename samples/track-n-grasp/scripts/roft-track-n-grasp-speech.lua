@@ -121,7 +121,7 @@ while state ~= "quit" and not interrupting do
           output:addString("o003")
        elseif object_name == "mustard" then
           output:addString("o006")
-       elseif object_name == "sugar"
+       elseif object_name == "sugar" then
           output:addString("o004")
        end
 
