@@ -8,6 +8,11 @@
     </module>
 
     <module>
+        <name>roft-realsense</name>
+        <node>node_with_roft_realsense</node>
+    </module>
+
+    <module>
         <name>yarpview</name>
         <parameters>--name /roft-tracker/viewer/segmentation:i</parameters>
         <node>localhost</node>
