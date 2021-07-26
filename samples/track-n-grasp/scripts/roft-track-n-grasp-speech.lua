@@ -115,7 +115,15 @@ while state ~= "quit" and not interrupting do
        local object_name = result:get(7):asString()
 
        local output = yarp.Bottle()
-       output:addString(object_name)
+       output:addString("select_object")
+
+       if object_name == "cracker" then
+          output:addString("o003")
+       elseif object_name == "mustard" then
+          output:addString("o006")
+       elseif object_name == "sugar"
+          output:addString("o004")
+       end
 
        send_output(port_output, output)
     end

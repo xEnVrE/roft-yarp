@@ -47,4 +47,10 @@
       <protocol>fast_tcp</protocol>
     </connection>
 
+    <connection>
+      <from>/roft-track-n-grasp/speech/object:o</from>
+      <to>/roft-track-n-grasp/rpc:i</to>
+      <protocol>fast_tcp</protocol>
+    </connection>
+
 </application>
