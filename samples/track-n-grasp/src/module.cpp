@@ -912,7 +912,7 @@ bool Module::execute_grasp(const Pose& pose)
 
         grasp_state_ = GraspState::WaitArmPregrasp;
         // start_counting(0.5);
-        start_counting(5.0);
+        start_counting(3.0);
 
         return true;
     }
@@ -957,7 +957,7 @@ bool Module::execute_grasp(const Pose& pose)
 
         grasp_state_ = GraspState::WaitArmReach;
         // start_counting(0.5);
-        start_counting(5.0);
+        start_counting(3.0);
 
         return true;
     }
@@ -1043,7 +1043,7 @@ bool Module::execute_grasp(const Pose& pose)
 
         grasp_state_ = GraspState::WaitLift;
         // start_counting(0.5);
-        start_counting(5.0);
+        start_counting(3.0);
 
         return true;
     }
