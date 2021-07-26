@@ -11,11 +11,11 @@
         <node>r1-vm-windows</node>
     </module>
 
-    <!-- <module> -->
-    <!--     <name></name> -->
-    <!--     <node>localhost</node> -->
-    <!--     <deployer>lua</deployer> -->
-    <!-- </module> -->
+    <module>
+        <name>roft-track-n-grasp-speech.lua</name>
+        <node>localhost</node>
+        <deployer>lua</deployer>
+    </module>
 
     <connection>
         <from>/roft-track-n-grasp/segmentation/rpc:o</from>

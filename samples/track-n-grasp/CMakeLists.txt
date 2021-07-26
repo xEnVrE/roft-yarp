@@ -65,6 +65,9 @@ target_link_libraries(${EXE_TARGET_NAME} PRIVATE
 
 install(TARGETS ${EXE_TARGET_NAME} DESTINATION bin)
 
+# Install lua script
+yarp_install(PROGRAMS scripts/roft-track-n-grasp-speech.lua DESTINATION bin)
+
 # Configuration files
 yarp_install(FILES app/roft-track-n-grasp.xml DESTINATION ${ICUBCONTRIB_APPLICATIONS_TEMPLATES_INSTALL_DIR})
 yarp_install(FILES app/conf/config.ini DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${EXE_TARGET_NAME})
