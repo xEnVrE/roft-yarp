@@ -36,8 +36,8 @@ iCubGaze::iCubGaze(const std::string& robot_name, const std::string& port_prefix
     gaze_->blockNeckRoll(0.0);
 
     /* Set trajectory times. */
-    gaze_->setNeckTrajTime(0.7);
-    gaze_->setEyesTrajTime(0.5);
+    gaze_->setNeckTrajTime(0.4);
+    gaze_->setEyesTrajTime(0.2);
 
     /* Set home configuration. */
     home_configuration_.resize(3);
