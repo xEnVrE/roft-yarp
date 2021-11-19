@@ -74,49 +74,49 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
 
     const Bottle rf_joint_control = rf.findGroup("JOINT_CONTROL");
     bool is_vector;
-    Vector arm_joint_home_configuration;
+    yarp::sig::Vector arm_joint_home_configuration;
     std::tie(is_vector, arm_joint_home_configuration) = load_vector_double(rf_joint_control, "home_arm_joints", 7);
     if (!is_vector)
     {
         yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::home_arm_joints";
         return false;
     }
-    Vector hand_joint_grasp_configuration_left;
+    yarp::sig::Vector hand_joint_grasp_configuration_left;
     std::tie(is_vector, hand_joint_grasp_configuration_left) = load_vector_double(rf_joint_control, "left_grasp_joints", 9);
     if (!is_vector)
     {
         yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::left_grasp_joints";
         return false;
     }
-    Vector hand_joint_grasp_configuration_right;
+    yarp::sig::Vector hand_joint_grasp_configuration_right;
     std::tie(is_vector, hand_joint_grasp_configuration_right) = load_vector_double(rf_joint_control, "right_grasp_joints", 9);
     if (!is_vector)
     {
         yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::right_grasp_joints";
         return false;
     }
-    Vector hand_joint_home_configuration;
+    yarp::sig::Vector hand_joint_home_configuration;
     std::tie(is_vector, hand_joint_home_configuration) = load_vector_double(rf_joint_control, "home_hand_joints", 9);
     if (!is_vector)
     {
         yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::home_hand_joints";
         return false;
     }
-    Vector hand_joint_pregrasp_configuration;
+    yarp::sig::Vector hand_joint_pregrasp_configuration;
     std::tie(is_vector, hand_joint_pregrasp_configuration) = load_vector_double(rf_joint_control, "pregrasp_hand_joints", 9);
     if (!is_vector)
     {
         yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::pregrasp_hand_joints";
         return false;
     }
-    Vector hand_joint_grasp_vels_left;
+    yarp::sig::Vector hand_joint_grasp_vels_left;
     std::tie(is_vector, hand_joint_grasp_vels_left) = load_vector_double(rf_joint_control, "left_grasp_vels", 9);
     if (!is_vector)
     {
         yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::left_grasp_vels";
         return false;
     }
-    Vector hand_joint_grasp_vels_right;
+    yarp::sig::Vector hand_joint_grasp_vels_right;
     std::tie(is_vector, hand_joint_grasp_vels_right) = load_vector_double(rf_joint_control, "right_grasp_vels", 9);
     if (!is_vector)
     {
@@ -403,7 +403,7 @@ bool Module::updateModule()
             /* Track object with gaze. */
             if (valid_pose && is_pose_gaze_safe(pose))
             {
-                Vector target(3);
+                yarp::sig::Vector target(3);
                 target(0) = pose.translation()(0);
                 target(1) = pose.translation()(1);
                 target(2) = pose.translation()(2);
@@ -503,9 +503,9 @@ std::string Module::select_object(const std::string& object_name)
 
 std::tuple<bool, Eigen::Transform<double, 3, Eigen::Affine>, Vector3d> Module::get_object_state()
 {
-    Vector* state_yarp = port_state_.read(is_pose_input_buffered_);
+    yarp::sig::Vector* state_yarp = port_state_.read(is_pose_input_buffered_);
 
-    auto yarp_to_transform = [](const Vector& vector) -> Pose
+    auto yarp_to_transform = [](const yarp::sig::Vector& vector) -> Pose
     {
         Pose pose;
         pose = Translation<double, 3>(vector[0], vector[1], vector[2]);
@@ -514,7 +514,7 @@ std::tuple<bool, Eigen::Transform<double, 3, Eigen::Affine>, Vector3d> Module::g
         return pose;
     };
 
-    auto yarp_to_velocity = [](const Vector& vector) -> Vector3d
+    auto yarp_to_velocity = [](const yarp::sig::Vector& vector) -> Vector3d
     {
         Vector3d velocity(vector[7], vector[8], vector[9]);
 
@@ -847,7 +847,7 @@ bool Module::execute_grasp(const Pose& pose)
 
         /* Keep gazing at the object. */
         gaze_->controller().setTrackingMode(true);
-        Vector target(3);
+        yarp::sig::Vector target(3);
         target(0) = pose.translation()(0);
         target(1) = pose.translation()(1);
         target(2) = pose.translation()(2);
@@ -1022,7 +1022,7 @@ bool Module::execute_grasp(const Pose& pose)
         const auto target = grasp_target_position_ + yarp::sig::Vector{0.0, 0.0, 0.1};
 
         /* Keep gazing at the object. */
-        Vector gaze_target(3);
+        yarp::sig::Vector gaze_target(3);
         gaze_target(0) = pose.translation()(0);
         gaze_target(1) = pose.translation()(1);
         gaze_target(2) = pose.translation()(2) + 0.1;
