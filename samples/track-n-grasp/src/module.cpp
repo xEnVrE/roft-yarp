@@ -377,12 +377,36 @@ bool Module::updateModule()
         yInfo() << "[Idle -> WaitForHome]";
         state_ = State::WaitForHome;
     }
-    else if (state_ == State::GoHome)
+    else if (state_ == State::IdleNoGaze)
+    {
+        /* Restore torso and arms idle configuration. */
+        go_home_arm();
+
+        /* Restore hand idle configuration. */
+        go_home_hand();
+
+        start_counting(wait_idle_);
+
+        yInfo() << "[IdleNoGaze -> WaitForHome]";
+        state_ = State::WaitForHome;
+    }
+    else if (state_ == State::GoHomeGaze)
     {
         /* Restore idle gaze configuration. */
         gaze_->go_home();
 
-        yInfo() << "[GoHome -> WaitForFeedback]";
+        yInfo() << "[GoHomeGaze -> WaitForFeedback]";
+        state_ = State::WaitForFeedback;
+    }
+    else if (state_ == State::GoHomeArms)
+    {
+        /* Restore torso and arms idle configuration. */
+        go_home_arm();
+
+        /* Restore hand idle configuration. */
+        go_home_hand();
+
+        yInfo() << "[GoHomeArms -> WaitForFeedback]";
         state_ = State::WaitForFeedback;
     }
     else if (state_ == State::Grasp)
@@ -395,7 +419,11 @@ bool Module::updateModule()
 
             yInfo() << "[Grasp -> Idle]";
 
-            state_ = State::Idle;
+            state_ = State::IdleNoGaze;
+        }
+        else if (grasp_state_ == GraspState::ObjectMoved)
+        {
+
         }
 
         if(!execute_grasp(grasp_object_pose_))
@@ -409,8 +437,8 @@ bool Module::updateModule()
     {
         if (elapsed > feedback_wait_threshold_)
         {
-            yInfo() << "[Tracking -> GoHome]";
-            state_ = State::GoHome;
+            yInfo() << "[Tracking -> GoHomeGaze]";
+            state_ = State::GoHomeGaze;
         }
         else
         {

@@ -259,7 +259,7 @@ private:
     /**
      * Module state.
      */
-    enum class State { Idle, GoHome, Grasp, Tracking, WaitForFeedback, WaitForHome };
+    enum class State { Idle, IdleNoGaze, GoHomeArms, GoHomeGaze, Grasp, Tracking, WaitForFeedback, WaitForHome };
 
     State state_ = State::Idle;
 
@@ -279,6 +279,7 @@ private:
         Grasp, WaitGrasp,
         Lift, WaitLift, WaitAfterLift,
         Release, WaitRelease,
+        ObjectMoved,
         Cleanup, Done
     };
 
