@@ -135,6 +135,7 @@ private:
     double wait_grasp_;
     double wait_lift_;
     double wait_after_lift_;
+    double wait_release_;
     double wait_idle_;
 
     /**

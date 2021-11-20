@@ -144,6 +144,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     wait_grasp_ = rf_timings.check("grasp", Value(3.0)).asDouble();
     wait_lift_ = rf_timings.check("lift", Value(3.0)).asDouble();
     wait_after_lift_ = rf_timings.check("after_lift", Value(3.0)).asDouble();
+    wait_release_ = rf_timings.check("release", Value(3.0)).asDouble();
     wait_idle_ = rf_timings.check("idle", Value(1.0)).asDouble();
 
     /* Open RPC port and attach to respond handler. */
@@ -1128,7 +1129,7 @@ bool Module::execute_grasp(const Pose& pose)
         yInfo() << "[Grasp][Release -> WaitRelease]";
 
         grasp_state_ = GraspState::WaitRelease;
-        start_counting(3.0);
+        start_counting(wait_release_);
 
         return true;
     }
