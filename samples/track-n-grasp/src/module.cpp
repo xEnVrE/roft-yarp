@@ -845,7 +845,11 @@ bool Module::execute_grasp(const Pose& pose, const Pose& feedback, const bool& v
         bool abort = false;
 
         Transform<double, 3, Affine> error = pose * feedback.inverse();
+
         if (error.translation().norm() > grasp_translation_error_)
+            abort = true;
+
+        if (grasp_use_angular_error_ && (AngleAxisd(error.rotation()).angle() > (grasp_angular_error_ * M_PI / 180.0)))
             abort = true;
 
         if (abort)
