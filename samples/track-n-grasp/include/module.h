@@ -211,11 +211,11 @@ private:
     /**
      * Object input reception time.
      */
-    double alpha_ema_ = 0.1;
+    double alpha_ema_ = 0.2;
 
     double input_delta_rx_;
 
-    const double input_delta_rx_max_ = 3000;
+    const double input_delta_rx_max_ = 1500;
 
     std::chrono::steady_clock::time_point last_rx_time_;
 
