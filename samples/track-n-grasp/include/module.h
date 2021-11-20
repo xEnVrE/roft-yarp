@@ -130,6 +130,13 @@ private:
     double grasp_limit_z_lower_;
     double grasp_limit_z_upper_;
 
+    double wait_pregrasp_;
+    double wait_reach_;
+    double wait_grasp_;
+    double wait_lift_;
+    double wait_after_lift_;
+    double wait_idle_;
+
     /**
      * iCub joint controllers.
      */

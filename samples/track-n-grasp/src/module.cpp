@@ -132,6 +132,14 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     obj_ss_time_thr_ = rf_steady_state_detector.check("time_threshold", Value(4.0)).asDouble();
     obj_ss_velocity_thr_ = rf_steady_state_detector.check("vel_threshold", Value(0.05)).asDouble();
 
+    const Bottle rf_timings = rf.findGroup("TIMINGS");
+    wait_pregrasp_ = rf_timings.check("pregrasp", Value(3.0)).asDouble();
+    wait_reach_ = rf_timings.check("reach", Value(3.0)).asDouble();
+    wait_grasp_ = rf_timings.check("grasp", Value(3.0)).asDouble();
+    wait_lift_ = rf_timings.check("lift", Value(3.0)).asDouble();
+    wait_after_lift_ = rf_timings.check("after_lift", Value(3.0)).asDouble();
+    wait_idle_ = rf_timings.check("idle", Value(1.0)).asDouble();
+
     /* Open RPC port and attach to respond handler. */
     if (!port_rpc_.open("/" + log_name_ + "/rpc:i"))
     {
@@ -358,7 +366,7 @@ bool Module::updateModule()
         /* Restore hand idle configuration. */
         go_home_hand();
 
-        start_counting(3.0);
+        start_counting(wait_idle_);
 
         yInfo() << "[Idle -> WaitForHome]";
         state_ = State::WaitForHome;
@@ -913,8 +921,7 @@ bool Module::execute_grasp(const Pose& pose)
         yInfo() << "[Grasp][ArmPregrasp -> WaitArmPregrasp]";
 
         grasp_state_ = GraspState::WaitArmPregrasp;
-        // start_counting(0.5);
-        start_counting(3.0);
+        start_counting(wait_pregrasp_);
 
         return true;
     }
@@ -958,8 +965,7 @@ bool Module::execute_grasp(const Pose& pose)
         yInfo() << "[Grasp][ArmReach -> WaitArmReach]";
 
         grasp_state_ = GraspState::WaitArmReach;
-        // start_counting(0.5);
-        start_counting(3.0);
+        start_counting(wait_reach_);
 
         return true;
     }
@@ -992,7 +998,7 @@ bool Module::execute_grasp(const Pose& pose)
         yInfo() << "[Grasp][Grasp -> WaitGrasp]";
 
         grasp_state_ = GraspState::WaitGrasp;
-        start_counting(6.0);
+        start_counting(wait_grasp_);
 
         return true;
     }
@@ -1044,8 +1050,7 @@ bool Module::execute_grasp(const Pose& pose)
         yInfo() << "[Grasp][Lift -> WaitLift]";
 
         grasp_state_ = GraspState::WaitLift;
-        // start_counting(0.5);
-        start_counting(3.0);
+        start_counting(wait_lift_);
 
         return true;
     }
@@ -1061,7 +1066,7 @@ bool Module::execute_grasp(const Pose& pose)
 
                 grasp_state_ = GraspState::WaitAfterLift;
 
-                start_counting(3.0);
+                start_counting(wait_after_lift_);
             // }
             // else
             //     start_counting(0.5);
