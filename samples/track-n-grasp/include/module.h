@@ -89,7 +89,7 @@ private:
     /**
      * Grasping.
      */
-    bool execute_grasp(const Eigen::Transform<double, 3, Eigen::Affine>& pose);
+    bool execute_grasp(const Eigen::Transform<double, 3, Eigen::Affine>& pose, const Eigen::Transform<double, 3, Eigen::Affine>& feedback, const bool& valid_feedback);
 
     /**
      * Face expression handling.
@@ -122,6 +122,10 @@ private:
     double cart_limit_y_upper_;
     double cart_limit_z_lower_;
     double cart_limit_z_upper_;
+
+    bool grasp_use_angular_error_;
+    double grasp_translation_error_;
+    double grasp_angular_error_;
 
     double grasp_limit_x_lower_;
     double grasp_limit_x_upper_;

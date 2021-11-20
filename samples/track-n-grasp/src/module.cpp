@@ -70,6 +70,11 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     double gaze_neck_time_home = rf_gaze_resp.check("neck_time_home", Value(3.0)).asDouble();
     double gaze_eyes_time_home = rf_gaze_resp.check("eyes_time_home", Value(3.0)).asDouble();
 
+    const Bottle rf_grasp_abort = rf.findGroup("GRASP_ABORT");
+    grasp_use_angular_error_ = rf_grasp_abort.check("angular", Value(false)).asBool();
+    grasp_angular_error_ = rf_grasp_abort.check("angular_error", Value(10.0)).asDouble();
+    grasp_translation_error_ = rf_grasp_abort.check("translation_error", Value(0.05)).asDouble();
+
     const Bottle rf_grasp_limits = rf.findGroup("GRASP_LIMITS");
     grasp_limit_x_lower_ = rf_grasp_limits.check("limit_x_lower", Value(-0.4)).asDouble();
     grasp_limit_x_upper_ = rf_grasp_limits.check("limit_x_upper", Value(-0.2)).asDouble();
@@ -425,9 +430,16 @@ bool Module::updateModule()
         else if (grasp_state_ == GraspState::ObjectMoved)
         {
 
+            yInfo() << "[Grasp][? -> ObjectMoved]";
+
+            grasp_state_ = GraspState::Idle;
+
+            yInfo() << "[Grasp -> Idle]";
+
+            state_ = State::IdleNoGaze;
         }
 
-        if(!execute_grasp(grasp_object_pose_))
+        if(!execute_grasp(grasp_object_pose_, pose, valid_pose))
         {
             yInfo() << "[Grasp -> WaitForFeedback]";
 
@@ -811,8 +823,48 @@ void Module::go_home_hand()
 }
 
 
-bool Module::execute_grasp(const Pose& pose)
+bool Module::execute_grasp(const Pose& pose, const Pose& feedback, const bool& valid_feedback)
 {
+
+    bool interruptible = !
+    (
+        (grasp_state_ == GraspState::Idle) ||
+        (grasp_state_ == GraspState::Evaluation) ||
+        (grasp_state_ == GraspState::Grasp) ||
+        (grasp_state_ == GraspState::WaitGrasp) ||
+        (grasp_state_ == GraspState::Lift) ||
+        (grasp_state_ == GraspState::WaitLift) ||
+        (grasp_state_ == GraspState::WaitAfterLift) ||
+        (grasp_state_ == GraspState::Release) ||
+        (grasp_state_ == GraspState::WaitRelease) ||
+        (grasp_state_ == GraspState::Cleanup)
+    );
+
+    if (valid_feedback && interruptible)
+    {
+        bool abort = false;
+
+        Transform<double, 3, Affine> error = pose * feedback.inverse();
+        if (error.translation().norm() > grasp_translation_error_)
+            abort = true;
+
+        if (abort)
+        {
+            gaze_->stop();
+            gaze_->controller().setTrackingMode(false);
+
+            grasp_cart_->stop();
+            grasp_cart_->controller().restoreContext(backup_grasp_context_);
+
+            grasp_cart_ = nullptr;
+            grasp_joints_hand_ = nullptr;
+
+            grasp_state_ = GraspState::ObjectMoved;
+
+            return true;
+        }
+    }
+
     if (grasp_state_ == GraspState::Evaluation)
     {
         /* Cardinal points grasp strategy. */
