@@ -64,6 +64,12 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     gaze_limit_y_ = rf_gaze_limits.check("limit_y", Value(0.0)).asDouble();
     gaze_limit_z_ = rf_gaze_limits.check("limit_z", Value(0.0)).asDouble();
 
+    const Bottle rf_gaze_resp = rf.findGroup("GAZE_RESP");
+    double gaze_neck_time_trk = rf_gaze_resp.check("neck_time_trk", Value(3.0)).asDouble();
+    double gaze_eyes_time_trk = rf_gaze_resp.check("eyes_time_trk", Value(3.0)).asDouble();
+    double gaze_neck_time_home = rf_gaze_resp.check("neck_time_home", Value(3.0)).asDouble();
+    double gaze_eyes_time_home = rf_gaze_resp.check("eyes_time_home", Value(3.0)).asDouble();
+
     const Bottle rf_grasp_limits = rf.findGroup("GRASP_LIMITS");
     grasp_limit_x_lower_ = rf_grasp_limits.check("limit_x_lower", Value(-0.4)).asDouble();
     grasp_limit_x_upper_ = rf_grasp_limits.check("limit_x_upper", Value(-0.2)).asDouble();
@@ -200,7 +206,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     objects_map_["o006"] = "006_mustard_bottle";
 
     /* Configure iCub gaze controller. */
-    gaze_ = std::make_shared<iCubGaze>(robot, log_name_);
+    gaze_ = std::make_shared<iCubGaze>(robot, log_name_, gaze_neck_time_trk, gaze_eyes_time_trk, gaze_neck_time_home, gaze_eyes_time_home);
 
     /* Configure iCub joint controllers. */
     joints_left_arm_ = std::make_shared<iCubMotorsPositions>(robot, "left", log_name_ + "/left_arm", /* use_arm = */ true, /* use_torso = */ false);

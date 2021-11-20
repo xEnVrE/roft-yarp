@@ -17,7 +17,7 @@
 class iCubGaze
 {
 public:
-    iCubGaze(const std::string& robot_name, const std::string& port_prefix);
+    iCubGaze(const std::string& robot_name, const std::string& port_prefix, const double& neck_time, const double& eyes_time, const double& neck_time_home, const double& eyes_time_home);
 
     void close();
 
@@ -34,6 +34,8 @@ public:
     bool stop();
 
 private:
+    void restore_from_home_context();
+
     yarp::os::Network yarp_;
 
     /* IGazeInterface related. */
@@ -44,6 +46,14 @@ private:
     int gaze_startup_context_;
 
     yarp::sig::Vector home_configuration_;
+
+    double neck_time_;
+    double eyes_time_;
+    double neck_time_home_;
+    double eyes_time_home_;
+
+    bool home_context_set_ = false;
+    int context_before_home_;
 
     /* Log name for messages. */
     const std::string log_name_ = "iCubGaze";
