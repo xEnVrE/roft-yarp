@@ -111,6 +111,8 @@ private:
     double gaze_limit_z_;
     double gaze_lower_limit_x_;
 
+    double grasp_tweak_rot_y_;
+
     /**
      * iCub Cartesian controllers.
      */

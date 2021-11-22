@@ -85,6 +85,9 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     grasp_limit_z_lower_ = rf_grasp_limits.check("limit_z_lower", Value(0.0)).asDouble();
     grasp_limit_z_upper_ = rf_grasp_limits.check("limit_z_upper", Value(0.3)).asDouble();
 
+    const Bottle rf_grasp_tweaks = rf.findGroup("GRASP_TWEAKS");
+    grasp_tweak_rot_y_ = rf_grasp_tweaks.check("rot_y", Value(0.0)).asDouble();
+
     const Bottle rf_joint_control = rf.findGroup("JOINT_CONTROL");
     bool is_vector;
     yarp::sig::Vector arm_joint_home_configuration;
@@ -922,7 +925,24 @@ bool Module::execute_grasp(const Pose& pose, const Pose& feedback, const bool& v
         const auto& T = std::get<2>(best);
         grasp_center_ = std::get<3>(best);
         grasp_target_position_ = T.getCol(3).subVector(0, 2);
-        grasp_target_orientation_ = dcm2axis(T);
+
+        if (grasp_tweak_rot_y_ != 0.0)
+        {
+            double angle = grasp_tweak_rot_y_ * M_PI / 180.0;
+            if (grasp_type_ == "right")
+                angle *= -1;
+
+            Matrix3d orientation = toEigen(T.submatrix(0, 2, 0, 2)) * AngleAxisd(angle, Vector3d::UnitY()).toRotationMatrix();
+            AngleAxisd angle_axis(orientation);
+            VectorXd axis_angle(4);
+            axis_angle.head(3) = angle_axis.axis();
+            axis_angle(3) = angle_axis.angle();
+
+            grasp_target_orientation_.resize(4);
+            toEigen(grasp_target_orientation_) = axis_angle;
+        }
+        else
+            grasp_target_orientation_ = dcm2axis(T);
 
         yInfo() << log_name_ + "::execute_grasp(). Found grasp pose using" << grasp_type_ << "arm at" << grasp_target_position_.toString();
 
