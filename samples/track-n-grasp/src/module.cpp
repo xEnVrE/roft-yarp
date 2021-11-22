@@ -85,7 +85,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     grasp_limit_z_lower_ = rf_grasp_limits.check("limit_z_lower", Value(0.0)).asDouble();
     grasp_limit_z_upper_ = rf_grasp_limits.check("limit_z_upper", Value(0.3)).asDouble();
 
-    const Bottle rf_grasp_tweaks = rf.findGroup("GRASP_TWEAKS");
+    const Bottle rf_grasp_tweaks = rf.findGroup("GRASP_POSE_TWEAKS");
     grasp_tweak_rot_y_ = rf_grasp_tweaks.check("rot_y", Value(0.0)).asDouble();
 
     const Bottle rf_joint_control = rf.findGroup("JOINT_CONTROL");
