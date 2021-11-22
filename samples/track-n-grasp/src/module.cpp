@@ -730,7 +730,10 @@ bool Module::is_object_steady(const Eigen::Vector3d& velocity)
             double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - obj_ss_start_time_).count() / 1000.0;
 
             if (elapsed > obj_ss_time_thr_)
+            {
+                obj_ss_timer_init_ = false;
                 return true;
+            }
         }
         else
         {
