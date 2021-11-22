@@ -607,10 +607,10 @@ bool Module::is_pose_gaze_safe(const Pose& pose)
     const double& y = pose.translation()(1);
     const double& z = pose.translation()(2);
 
-    if (enable_gaze_limit_x_ && (x > gaze_limit_x_))
+    if (enable_gaze_limit_x_ && (-x > gaze_limit_x_))
         return false;
 
-    if (enable_gaze_lower_limit_x_ && (x < gaze_lower_limit_x_))
+    if (enable_gaze_lower_limit_x_ && (-x < gaze_lower_limit_x_))
         return false;
 
     if (enable_gaze_limit_y_ && (abs(y) > gaze_limit_y_))
