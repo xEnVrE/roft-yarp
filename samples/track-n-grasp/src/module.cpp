@@ -151,6 +151,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     wait_after_lift_ = rf_timings.check("after_lift", Value(3.0)).asDouble();
     wait_release_ = rf_timings.check("release", Value(3.0)).asDouble();
     wait_idle_ = rf_timings.check("idle", Value(1.0)).asDouble();
+    wait_idle_no_gaze_ = rf_timings.check("idle_no_gaze", Value(1.0)).asDouble();
 
     /* Open RPC port and attach to respond handler. */
     if (!port_rpc_.open("/" + log_name_ + "/rpc:i"))
@@ -391,7 +392,7 @@ bool Module::updateModule()
         /* Restore hand idle configuration. */
         go_home_hand();
 
-        start_counting(wait_idle_);
+        start_counting(wait_idle_no_gaze_);
 
         yInfo() << "[IdleNoGaze -> WaitForHome]";
         state_ = State::WaitForHome;

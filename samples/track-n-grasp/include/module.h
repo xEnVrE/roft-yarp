@@ -141,6 +141,7 @@ private:
     double wait_after_lift_;
     double wait_release_;
     double wait_idle_;
+    double wait_idle_no_gaze_;
 
     /**
      * iCub joint controllers.
