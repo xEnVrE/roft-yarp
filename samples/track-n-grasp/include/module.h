@@ -104,10 +104,12 @@ private:
     bool enable_gaze_limit_x_;
     bool enable_gaze_limit_y_;
     bool enable_gaze_limit_z_;
+    bool enable_gaze_lower_limit_x_;
 
     double gaze_limit_x_;
     double gaze_limit_y_;
     double gaze_limit_z_;
+    double gaze_lower_limit_x_;
 
     /**
      * iCub Cartesian controllers.

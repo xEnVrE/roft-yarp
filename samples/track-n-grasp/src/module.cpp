@@ -60,9 +60,11 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     enable_gaze_limit_x_ = rf_gaze_limits.check("enable_limit_x", Value(true)).asBool();
     enable_gaze_limit_y_ = rf_gaze_limits.check("enable_limit_y", Value(false)).asBool();
     enable_gaze_limit_z_ = rf_gaze_limits.check("enable_limit_z", Value(false)).asBool();
+    enable_gaze_lower_limit_x_ = rf_gaze_limits.check("enable_lower_limit_x", Value(true)).asBool();
     gaze_limit_x_ = rf_gaze_limits.check("limit_x", Value(0.9)).asDouble();
     gaze_limit_y_ = rf_gaze_limits.check("limit_y", Value(0.0)).asDouble();
     gaze_limit_z_ = rf_gaze_limits.check("limit_z", Value(0.0)).asDouble();
+    gaze_lower_limit_x_ = rf_gaze_limits.check("lower_limit_x", Value(0.3)).asDouble();
 
     const Bottle rf_gaze_resp = rf.findGroup("GAZE_RESP");
     double gaze_neck_time_trk = rf_gaze_resp.check("neck_time_trk", Value(3.0)).asDouble();
@@ -603,6 +605,9 @@ bool Module::is_pose_gaze_safe(const Pose& pose)
     const double& z = pose.translation()(2);
 
     if (enable_gaze_limit_x_ && (abs(x) > gaze_limit_x_))
+        return false;
+
+    if (enable_gaze_lower_limit_x_ && (abs(x) < gaze_lower_limit_x_))
         return false;
 
     if (enable_gaze_limit_y_ && (abs(y) > gaze_limit_y_))
