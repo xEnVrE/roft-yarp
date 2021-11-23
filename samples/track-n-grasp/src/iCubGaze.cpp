@@ -114,5 +114,7 @@ void iCubGaze::restore_from_home_context()
     {
         home_context_set_ = false;
         gaze_->restoreContext(context_before_home_);
+        gaze_->setNeckTrajTime(neck_time_);
+        gaze_->setEyesTrajTime(eyes_time_);
     }
 }
