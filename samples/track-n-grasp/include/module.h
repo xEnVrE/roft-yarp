@@ -138,6 +138,7 @@ private:
     double grasp_limit_z_lower_;
     double grasp_limit_z_upper_;
 
+    double wait_hand_pregrasp_;
     double wait_pregrasp_;
     double wait_reach_;
     double wait_grasp_;

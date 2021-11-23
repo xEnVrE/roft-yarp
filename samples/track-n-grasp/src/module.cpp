@@ -149,6 +149,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     obj_ss_velocity_thr_ = rf_steady_state_detector.check("vel_threshold", Value(0.05)).asDouble();
 
     const Bottle rf_timings = rf.findGroup("TIMINGS");
+    wait_hand_pregrasp_ = rf_timings.check("hand_pregrasp", Value(1.0)).asDouble();
     wait_pregrasp_ = rf_timings.check("pregrasp", Value(3.0)).asDouble();
     wait_reach_ = rf_timings.check("reach", Value(3.0)).asDouble();
     wait_grasp_ = rf_timings.check("grasp", Value(3.0)).asDouble();
@@ -998,7 +999,7 @@ bool Module::execute_grasp(const Pose& pose, const Pose& feedback, const bool& v
         yInfo() << "[Grasp][Evaluate -> WaitHandPregrasp]";
 
         grasp_state_ = GraspState::WaitHandPregrasp;
-        start_counting(1.0);
+        start_counting(wait_hand_pregrasp_);
 
         return true;
     }
@@ -1006,18 +1007,13 @@ bool Module::execute_grasp(const Pose& pose, const Pose& feedback, const bool& v
     {
         if (is_elapsed_from_start_counting())
         {
-            if (grasp_joints_hand_->check_motion_done(hand_considered_joints_))
-            {
-                yInfo() << log_name_ + "::execute_grasp(). Hand ready in pregrasp configuration";
+            yInfo() << log_name_ + "::execute_grasp(). Hand ready in pregrasp configuration";
 
-                yInfo() << "[Grasp][Evaluate -> ArmPregrasp]";
+            yInfo() << "[Grasp][Evaluate -> ArmPregrasp]";
 
-                grasp_state_ = GraspState::ArmPregrasp;
+            grasp_state_ = GraspState::ArmPregrasp;
 
-                return true;
-            }
-            else
-                start_counting(1.0);
+            return true;
         }
 
         return true;
