@@ -933,7 +933,7 @@ bool Module::execute_grasp(const Pose& pose, const Pose& feedback, const bool& v
         grasp_center_ = std::get<3>(best);
         grasp_target_position_ = T.getCol(3).subVector(0, 2);
 
-        if (grasp_tweak_rot_y_ != 0.0)
+        if (abs(grasp_tweak_rot_y_) > 0.0)
         {
             double angle = grasp_tweak_rot_y_ * M_PI / 180.0;
             if (grasp_type_ == "right")
