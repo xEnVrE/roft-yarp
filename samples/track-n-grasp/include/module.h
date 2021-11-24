@@ -324,6 +324,8 @@ private:
 
     std::string viewer_meshes_path_;
 
+    bool use_viewer_;
+
     void viewer_thread_function(std::shared_ptr<viewer::Viewer> viewer);
 
     void show_grasp_candidates(const std::string& name, const Eigen::Transform<double, 3, Eigen::Affine>& pose, const std::vector<cardinal_points_grasp::rankable_candidate>& candidates);

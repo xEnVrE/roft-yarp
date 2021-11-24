@@ -32,6 +32,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     const std::string robot = rf.check("robot", Value("icub")).asString();
     frequency_ = rf.check("frequency", Value(30)).asInt();
     use_face_expression_ = rf.check("use_face_expression", Value(false)).asBool();
+    use_viewer_ = rf.check("use_viewer", Value(false)).asBool();
 
     const Bottle rf_cartesian_control = rf.findGroup("CARTESIAN_CONTROL");
     approach_traj_time_ = rf_cartesian_control.check("approach_traj_time", Value(5.0)).asDouble();
@@ -287,10 +288,13 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     grasp_hand_joints_vels_right_ = toEigen(hand_joint_grasp_vels_right);
 
     /* Initialize viewer. */
-    viewer_ = std::make_shared<Viewer>(10, 370, 700, 700);
-    viewer_->loadObjects(viewer_meshes_path_);
-    viewer_thread_ = std::thread(&Module::viewer_thread_function, this, viewer_);
-    viewer_thread_.detach();
+    if (use_viewer_)
+    {
+        viewer_ = std::make_shared<Viewer>(10, 370, 700, 700);
+        viewer_->loadObjects(viewer_meshes_path_);
+        viewer_thread_ = std::thread(&Module::viewer_thread_function, this, viewer_);
+        viewer_thread_.detach();
+    }
 
     return true;
 }
@@ -298,6 +302,9 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
 
 bool Module::close()
 {
+    if (use_viewer_)
+        viewer_->stop();
+
     if (cart_left_)
         cart_left_->stop();
 
@@ -937,7 +944,8 @@ bool Module::execute_grasp(const Pose& pose, const Pose& feedback, const bool& v
             return false;
         }
 
-        show_grasp_candidates(object_name_, pose, candidates);
+        if (use_viewer_)
+            show_grasp_candidates(object_name_, pose, candidates);
 
         const auto& best = candidates[0];
         grasp_type_ = std::get<0>(best);
