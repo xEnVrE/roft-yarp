@@ -75,7 +75,7 @@ target_link_libraries(${EXE_TARGET_NAME} PRIVATE
                                          ${VTK_LIBRARIES}
 )
 if (VTK_VERSION VERSION_GREATER_EQUAL "8.90.0")
-  vtk_module_autoinit(TARGETS ${PROJECT_NAME} MODULES ${VTK_LIBRARIES})
+  vtk_module_autoinit(TARGETS roft-track-n-grasp MODULES ${VTK_LIBRARIES})
 endif()
 
 install(TARGETS ${EXE_TARGET_NAME} DESTINATION bin)
