@@ -6,7 +6,6 @@
  */
 
 #include <module.h>
-#include <cardinal_points_grasp.h>
 
 #include <yarp/eigen/Eigen.h>
 #include <yarp/os/Bottle.h>
@@ -18,6 +17,7 @@
 using namespace Eigen;
 using namespace Utils;
 using namespace cardinal_points_grasp;
+using namespace viewer;
 using namespace std::literals::chrono_literals;
 using namespace yarp::eigen;
 using namespace yarp::math;
@@ -282,6 +282,11 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     postgrasp_hand_joints_vels_ = pregrasp_hand_joints_vels_;
     grasp_hand_joints_vels_left_ = toEigen(hand_joint_grasp_vels_left);
     grasp_hand_joints_vels_right_ = toEigen(hand_joint_grasp_vels_right);
+
+    /* Initialize viewer. */
+    viewer_ = std::make_shared<Viewer>(10, 370, 700, 700);
+    viewer_thread_ = std::thread(&Module::viewer_thread_function, this, viewer_);
+    viewer_thread_.detach();
 
     return true;
 }
@@ -928,6 +933,8 @@ bool Module::execute_grasp(const Pose& pose, const Pose& feedback, const bool& v
             return false;
         }
 
+        show_grasp_candidates(object_name_, pose, candidates);
+
         const auto& best = candidates[0];
         grasp_type_ = std::get<0>(best);
         const auto& T = std::get<2>(best);
@@ -1287,4 +1294,41 @@ void Module::set_face_expression(const std::string& type)
     out.addVocab(Vocab::encode(type));
     port_face_.write(out);
     // port_face_.write(out,in);
+}
+
+
+void Module::viewer_thread_function(std::shared_ptr<viewer::Viewer> viewer)
+{
+    viewer->start();
+}
+
+
+void Module::show_grasp_candidates
+(
+    const std::string& name,
+    const Eigen::Transform<double, 3, Eigen::Affine>& pose,
+    const std::vector<cardinal_points_grasp::rankable_candidate>& candidates
+)
+{
+    yarp::sig::Vector cam_x;
+    yarp::sig::Vector cam_o;
+    gaze_->controller().getLeftEyePose(cam_x, cam_o);
+
+    Bottle info;
+    gaze_->controller().getInfo(info);
+    const auto w = info.find("camera_width_left").asInt();
+    const auto g = info.find("camera_height_left").asInt();
+    const auto fov_h = info.find("camera_intrinsics_left").asList()->get(0).asFloat64();
+    const auto view_angle = 2. * std::atan((w / 2.) / fov_h) * (180. / M_PI);
+
+    viewer_->addCamera
+    (
+        {cam_x[0], cam_x[1], cam_x[2]},
+        {pose.translation()(0), pose.translation()(1), pose.translation()(2)},
+        {0., 0., 1.},
+        view_angle
+    );
+    viewer_->addObject(object_name_, pose);
+    viewer_->focusOnObject();
+    viewer_->showCandidates(candidates);
 }

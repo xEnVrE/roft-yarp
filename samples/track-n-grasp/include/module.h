@@ -14,6 +14,8 @@
 #include <iCubGaze.h>
 #include <iCubMotorsPositions.h>
 #include <Utils.h>
+#include <cardinal_points_grasp.h>
+#include <viewer.h>
 
 #include <thrift/ModuleIDL.h>
 
@@ -25,6 +27,7 @@
 
 #include <chrono>
 #include <string>
+#include <thread>
 #include <unordered_map>
 
 
@@ -311,6 +314,18 @@ private:
     yarp::sig::Vector grasp_center_;
 
     std::string grasp_type_;
+
+    /**
+     * Viewer.
+     */
+    std::shared_ptr<viewer::Viewer> viewer_;
+
+    std::thread viewer_thread_;
+
+    void viewer_thread_function(std::shared_ptr<viewer::Viewer> viewer);
+
+    void show_grasp_candidates(const std::string& name, const Eigen::Transform<double, 3, Eigen::Affine>& pose, const std::vector<cardinal_points_grasp::rankable_candidate>& candidates);
+
 
     /**
      * Name for log messages.
