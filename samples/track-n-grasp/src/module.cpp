@@ -140,6 +140,9 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
+    const Bottle rf_mesh_paths = rf.findGroup("MESH_PATH");
+    viewer_meshes_path_ = rf_mesh_paths.check("mesh_path", Value("")).asString();
+
     const Bottle rf_parts = rf.findGroup("PARTS");
     bool enable_part_left = rf_parts.check("left", Value(false)).asBool();
     bool enable_part_right = rf_parts.check("right", Value(false)).asBool();
@@ -285,6 +288,7 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
 
     /* Initialize viewer. */
     viewer_ = std::make_shared<Viewer>(10, 370, 700, 700);
+    viewer_->loadObjects(viewer_meshes_path_);
     viewer_thread_ = std::thread(&Module::viewer_thread_function, this, viewer_);
     viewer_thread_.detach();
 
@@ -1317,7 +1321,6 @@ void Module::show_grasp_candidates
     Bottle info;
     gaze_->controller().getInfo(info);
     const auto w = info.find("camera_width_left").asInt();
-    const auto g = info.find("camera_height_left").asInt();
     const auto fov_h = info.find("camera_intrinsics_left").asList()->get(0).asFloat64();
     const auto view_angle = 2. * std::atan((w / 2.) / fov_h) * (180. / M_PI);
 

@@ -37,6 +37,9 @@
 #include <vtkRenderer.h>
 #include <vtkCamera.h>
 #include <vtkInteractorStyleSwitch.h>
+#include <vtkOBJReader.h>
+#include <vtkTexture.h>
+#include <vtkPNGReader.h>
 
 #include <yarp/eigen/Eigen.h>
 #include <yarp/os/Value.h>
@@ -83,27 +86,93 @@ public:
 };
 
 /******************************************************************************/
+class VtkMeshOBJ {
+    vtkSmartPointer<vtkPolyData>       vtk_polydata;
+    vtkSmartPointer<vtkPolyDataMapper> vtk_mapper;
+    vtkSmartPointer<vtkOBJReader>      vtk_reader;
+    vtkSmartPointer<vtkTexture>        vtk_texture;
+    vtkSmartPointer<vtkPNGReader>      vtk_texture_reader;
+    vtkSmartPointer<vtkActor>          vtk_actor;
+
+public:
+    /**************************************************************************/
+    VtkMeshOBJ(const std::string& name, const std::string& path) {
+        const std::string root = path + "/" + name + "/";
+        const std::string mesh_path = root + "textured.obj";
+        const std::string texture_path = root + "texture_map.png";
+
+        vtk_reader = vtkSmartPointer<vtkOBJReader>::New();
+        vtk_reader->SetFileName(mesh_path.c_str());
+
+        vtk_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+        vtk_mapper->SetInputConnection(vtk_reader->GetOutputPort());
+
+        vtk_actor = vtkSmartPointer<vtkActor>::New();
+        vtk_actor->SetMapper(vtk_mapper);
+
+        vtk_texture_reader = vtkSmartPointer<vtkPNGReader>::New();
+
+        vtk_texture = vtkSmartPointer<vtkTexture>::New();
+        vtk_texture_reader->SetFileName(texture_path.c_str());
+        vtk_texture_reader->Update();
+        vtk_texture->SetInputConnection(vtk_texture_reader->GetOutputPort());
+
+        vtk_actor->SetTexture(vtk_texture);
+        vtk_actor->GetProperty()->SetOpacity(1.0);
+    }
+
+    /**************************************************************************/
+    void addToRenderer(vtkRenderer& renderer) {
+        renderer.AddActor(vtk_actor);
+    }
+
+    /**************************************************************************/
+    void hide() {
+        vtk_actor->SetVisibility(false);
+    }
+
+    /**************************************************************************/
+    void show() {
+        vtk_actor->SetVisibility(true);
+    }
+
+    /**************************************************************************/
+    void setPose(const Eigen::Transform<double, 3, Eigen::Affine>& pose) {
+
+        Eigen::AngleAxisd angle_axis(pose.rotation());
+
+        vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
+        transform->Translate(pose.translation().data());
+        transform->RotateWXYZ(angle_axis.angle() * 180 / M_PI,
+                              angle_axis.axis()(0), angle_axis.axis()(1), angle_axis.axis()(2));
+
+        vtk_actor->SetUserTransform(transform);
+    }
+};
+
+/******************************************************************************/
 class Viewer {
-    vtkSmartPointer<vtkRenderer>                    vtk_renderer{nullptr};
-    vtkSmartPointer<vtkRenderWindow>                vtk_renderWindow{nullptr};
-    vtkSmartPointer<vtkRenderWindowInteractor>      vtk_renderWindowInteractor{nullptr};
-    vtkSmartPointer<UpdateCommand>                  vtk_updateCallback{nullptr};
-    vtkSmartPointer<vtkAxesActor>                   vtk_axes{nullptr};
-    vtkSmartPointer<vtkInteractorStyleSwitch>       vtk_style{nullptr};
-    vtkSmartPointer<vtkCamera>                      vtk_camera{nullptr};
-    vtkSmartPointer<vtkPlaneSource>                 vtk_floor{nullptr};
-    vtkSmartPointer<vtkPolyDataMapper>              vtk_floor_mapper{nullptr};
-    vtkSmartPointer<vtkActor>                       vtk_floor_actor{nullptr};
-    vtkSmartPointer<vtkPolyDataMapper>              vtk_object_mapper{nullptr};
-    vtkSmartPointer<vtkPoints>                      vtk_object_points{nullptr};
-    vtkSmartPointer<vtkUnsignedCharArray>           vtk_object_colors{nullptr};
-    vtkSmartPointer<vtkPolyData>                    vtk_object_polydata{nullptr};
-    vtkSmartPointer<vtkVertexGlyphFilter>           vtk_object_filter{nullptr};
-    vtkSmartPointer<vtkActor>                       vtk_object_actor{nullptr};
-    std::vector<vtkSmartPointer<vtkArrowSource>>    vtk_arrows;
-    std::vector<vtkSmartPointer<vtkPolyDataMapper>> vtk_arrows_mappers;
-    std::vector<vtkSmartPointer<vtkTransform>>      vtk_arrows_transforms;
-    std::vector<vtkSmartPointer<vtkActor>>          vtk_arrows_actors;
+    vtkSmartPointer<vtkRenderer>                     vtk_renderer{nullptr};
+    vtkSmartPointer<vtkRenderWindow>                 vtk_renderWindow{nullptr};
+    vtkSmartPointer<vtkRenderWindowInteractor>       vtk_renderWindowInteractor{nullptr};
+    vtkSmartPointer<UpdateCommand>                   vtk_updateCallback{nullptr};
+    vtkSmartPointer<vtkAxesActor>                    vtk_axes{nullptr};
+    vtkSmartPointer<vtkInteractorStyleSwitch>        vtk_style{nullptr};
+    vtkSmartPointer<vtkCamera>                       vtk_camera{nullptr};
+    vtkSmartPointer<vtkPlaneSource>                  vtk_floor{nullptr};
+    vtkSmartPointer<vtkPolyDataMapper>               vtk_floor_mapper{nullptr};
+    vtkSmartPointer<vtkActor>                        vtk_floor_actor{nullptr};
+    vtkSmartPointer<vtkPolyDataMapper>               vtk_object_mapper{nullptr};
+    vtkSmartPointer<vtkPoints>                       vtk_object_points{nullptr};
+    vtkSmartPointer<vtkUnsignedCharArray>            vtk_object_colors{nullptr};
+    vtkSmartPointer<vtkPolyData>                     vtk_object_polydata{nullptr};
+    vtkSmartPointer<vtkVertexGlyphFilter>            vtk_object_filter{nullptr};
+    vtkSmartPointer<vtkActor>                        vtk_object_actor{nullptr};
+    std::vector<vtkSmartPointer<vtkArrowSource>>     vtk_arrows;
+    std::vector<vtkSmartPointer<vtkPolyDataMapper>>  vtk_arrows_mappers;
+    std::vector<vtkSmartPointer<vtkTransform>>       vtk_arrows_transforms;
+    std::vector<vtkSmartPointer<vtkActor>>           vtk_arrows_actors;
+    std::unordered_map<std::string, std::unique_ptr<VtkMeshOBJ>>  vtk_meshes;
 
     std::unordered_map<std::string, Eigen::VectorXd> object_sizes;
     Eigen::VectorXd                                  object_parameters;
@@ -170,6 +239,16 @@ public:
     }
 
     /**************************************************************************/
+    void loadObjects(const std::string& path) {
+        for (const auto& name : {"003_cracker_box", "004_sugar_box", "006_mustard_bottle"})
+        {
+            vtk_meshes[name] = std::unique_ptr<VtkMeshOBJ>(new VtkMeshOBJ(name, path));
+            vtk_meshes[name]->addToRenderer(*vtk_renderer);
+            vtk_meshes[name]->hide();
+        }
+    }
+
+    /**************************************************************************/
     void addCamera(const std::vector<double>& position, const std::vector<double>& focalpoint,
                    const std::vector<double>& viewup, const double view_angle) {
         std::lock_guard<std::mutex> lck(mtx);
@@ -182,32 +261,6 @@ public:
     }
 
     /**************************************************************************/
-    void addTable(const std::vector<double>& center, const std::vector<double>& normal) {
-        std::lock_guard<std::mutex> lck(mtx);
-        if (vtk_floor_actor) {
-            vtk_renderer->RemoveActor(vtk_floor_actor);
-        }
-
-        vtk_floor = vtkSmartPointer<vtkPlaneSource>::New();
-        vtk_floor->SetOrigin(0., 0., 0.);
-        vtk_floor->SetPoint1(.5, 0., 0.);
-        vtk_floor->SetPoint2(0., .5, 0.);
-        vtk_floor->SetResolution(20, 20);
-        vtk_floor->SetCenter(const_cast<std::vector<double>&>(center).data());
-        vtk_floor->SetNormal(const_cast<std::vector<double>&>(normal).data());
-        vtk_floor->Update();
-
-        vtk_floor_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-        vtk_floor_mapper->SetInputData(vtk_floor->GetOutput());
-
-        vtk_floor_actor = vtkSmartPointer<vtkActor>::New();
-        vtk_floor_actor->SetMapper(vtk_floor_mapper);
-        vtk_floor_actor->GetProperty()->SetRepresentationToWireframe();
-
-        vtk_renderer->AddActor(vtk_floor_actor);
-    }
-
-    /**************************************************************************/
     void addObject(const std::string& name, const Eigen::Transform<double, 3, Eigen::Affine>& pose) {
         std::lock_guard<std::mutex> lck(mtx);
 
@@ -217,6 +270,12 @@ public:
         object_parameters(2) = object_sizes.at(name)(2) / 2;
 
         object_pose = pose;
+
+        for (const auto& pair : vtk_meshes)
+            pair.second->hide();
+
+        vtk_meshes[name]->setPose(pose);
+        vtk_meshes[name]->show();
     }
 
     /**************************************************************************/
