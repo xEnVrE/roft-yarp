@@ -6,7 +6,6 @@
  */
 
 #include <tracker.h>
-#include <probe_redball.h>
 
 #include <iostream>
 #include <memory>
