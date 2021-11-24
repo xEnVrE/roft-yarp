@@ -37,10 +37,8 @@ yarp_add_idl(${EXE_TARGET_NAME}_THRIFT_SRC ${${EXE_TARGET_NAME}_THRIFT_HDR})
 # Executable
 add_executable(${EXE_TARGET_NAME}
                include/tracker.h
-               include/probe_redball.h
                src/main.cpp
                src/tracker.cpp
-               src/probe_redball.cpp
                ${${EXE_TARGET_NAME}_THRIFT_SRC}
 )
 
