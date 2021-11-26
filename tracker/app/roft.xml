@@ -14,7 +14,7 @@
 
     <module>
         <name>yarpview</name>
-        <parameters>--name /roft-tracker/viewer/segmentation:i</parameters>
+        <parameters>--name /roft-tracker/viewer/segmentation:i --synch</parameters>
         <node>localhost</node>
     </module>
 
