@@ -7,4 +7,8 @@
 #
 #===============================================================================
 
-add_subdirectory(track-n-grasp)
+option(BUILD_TRACK_N_GRASP "Build tracking with grasping sample." OFF)
+
+if (BUILD_TRACK_N_GRASP)
+   add_subdirectory(track-n-grasp)
+endif()

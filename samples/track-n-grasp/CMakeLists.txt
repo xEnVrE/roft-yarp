@@ -27,15 +27,6 @@ find_package(Eigen3 REQUIRED)
 # Object Tracking library
 find_package(OTL REQUIRED)
 
-# Threads
-find_package(Threads REQUIRED)
-
-# VTK
-find_package(VTK REQUIRED)
-if (VTK_VERSION VERSION_LESS "8.90.0")
-  include(${VTK_USE_FILE})
-endif()
-
 # Thrift
 set(${EXE_TARGET_NAME}_THRIFT_HDR thrift/idl.thrift)
 
@@ -45,7 +36,6 @@ yarp_add_idl(${EXE_TARGET_NAME}_THRIFT_SRC ${${EXE_TARGET_NAME}_THRIFT_HDR})
 add_executable(${EXE_TARGET_NAME}
                include/cardinal_points_grasp.h
                include/module.h
-               include/viewer.h
                include/iCubCartesian.h
                include/iCubGaze.h
                include/iCubMotors.h
@@ -66,17 +56,12 @@ target_include_directories(${EXE_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR
 target_link_libraries(${EXE_TARGET_NAME} PRIVATE
                                          Eigen3::Eigen
                                          ICUB::iKin
-                                         Threads::Threads
                                          YARP::YARP_dev
                                          YARP::YARP_eigen
                                          YARP::YARP_init
                                          YARP::YARP_os
                                          YARP::YARP_sig
-                                         ${VTK_LIBRARIES}
 )
-if (VTK_VERSION VERSION_GREATER_EQUAL "8.90.0")
-  vtk_module_autoinit(TARGETS roft-track-n-grasp MODULES ${VTK_LIBRARIES})
-endif()
 
 install(TARGETS ${EXE_TARGET_NAME} DESTINATION bin)
 

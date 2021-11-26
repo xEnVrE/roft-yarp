@@ -17,7 +17,6 @@
 using namespace Eigen;
 using namespace Utils;
 using namespace cardinal_points_grasp;
-using namespace viewer;
 using namespace std::literals::chrono_literals;
 using namespace yarp::eigen;
 using namespace yarp::math;
@@ -32,7 +31,6 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     const std::string robot = rf.check("robot", Value("icub")).asString();
     frequency_ = rf.check("frequency", Value(30)).asInt();
     use_face_expression_ = rf.check("use_face_expression", Value(false)).asBool();
-    use_viewer_ = rf.check("use_viewer", Value(false)).asBool();
 
     const Bottle rf_cartesian_control = rf.findGroup("CARTESIAN_CONTROL");
     approach_traj_time_ = rf_cartesian_control.check("approach_traj_time", Value(5.0)).asDouble();
@@ -140,9 +138,6 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
         yError() << log_name_ + "::configure(). Error: cannot get parameter JOINT_CONTROL::right_grasp_vels";
         return false;
     }
-
-    const Bottle rf_mesh_paths = rf.findGroup("MESH_PATH");
-    viewer_meshes_path_ = rf_mesh_paths.check("mesh_path", Value("")).asString();
 
     const Bottle rf_parts = rf.findGroup("PARTS");
     bool enable_part_left = rf_parts.check("left", Value(false)).asBool();
@@ -287,24 +282,12 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     grasp_hand_joints_vels_left_ = toEigen(hand_joint_grasp_vels_left);
     grasp_hand_joints_vels_right_ = toEigen(hand_joint_grasp_vels_right);
 
-    /* Initialize viewer. */
-    if (use_viewer_)
-    {
-        viewer_ = std::make_shared<Viewer>(10, 370, 700, 700);
-        viewer_->loadObjects(viewer_meshes_path_);
-        viewer_thread_ = std::thread(&Module::viewer_thread_function, this, viewer_);
-        viewer_thread_.detach();
-    }
-
     return true;
 }
 
 
 bool Module::close()
 {
-    if (use_viewer_)
-        viewer_->stop();
-
     if (cart_left_)
         cart_left_->stop();
 
@@ -944,8 +927,7 @@ bool Module::execute_grasp(const Pose& pose, const Pose& feedback, const bool& v
             return false;
         }
 
-        if (use_viewer_)
-            show_grasp_candidates(object_name_, pose, candidates);
+        show_grasp_candidates(object_name_, pose, candidates);
 
         const auto& best = candidates[0];
         grasp_type_ = std::get<0>(best);
@@ -1309,12 +1291,6 @@ void Module::set_face_expression(const std::string& type)
 }
 
 
-void Module::viewer_thread_function(std::shared_ptr<viewer::Viewer> viewer)
-{
-    viewer->start();
-}
-
-
 void Module::show_grasp_candidates
 (
     const std::string& name,
@@ -1322,24 +1298,4 @@ void Module::show_grasp_candidates
     const std::vector<cardinal_points_grasp::rankable_candidate>& candidates
 )
 {
-    yarp::sig::Vector cam_x;
-    yarp::sig::Vector cam_o;
-    gaze_->controller().getLeftEyePose(cam_x, cam_o);
-
-    Bottle info;
-    gaze_->controller().getInfo(info);
-    const auto w = info.find("camera_width_left").asInt();
-    const auto fov_h = info.find("camera_intrinsics_left").asList()->get(0).asFloat64();
-    const auto view_angle = 2. * std::atan((w / 2.) / fov_h) * (180. / M_PI);
-
-    viewer_->addCamera
-    (
-        {cam_x[0], cam_x[1], cam_x[2]},
-        {pose.translation()(0), pose.translation()(1), pose.translation()(2)},
-        {0., 0., 1.},
-        view_angle
-    );
-    viewer_->addObject(object_name_, pose);
-    viewer_->focusOnObject();
-    viewer_->showCandidates(candidates);
 }
