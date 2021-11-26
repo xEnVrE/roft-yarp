@@ -8,7 +8,12 @@
 #===============================================================================
 
 option(BUILD_TRACK_N_GRASP "Build tracking with grasping sample." OFF)
+option(BUILD_GRASP_VIEWER  "Build grasp candidates viewer." OFF)
 
 if (BUILD_TRACK_N_GRASP)
    add_subdirectory(track-n-grasp)
+endif()
+
+if (BUILD_GRASP_VIEWER)
+   add_subdirectory(grasp-viewer)
 endif()
