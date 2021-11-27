@@ -17,6 +17,7 @@
 #include <vector>
 #include <cmath>
 #include <limits>
+#include <unordered_map>
 
 #include <vtkSmartPointer.h>
 #include <vtkCommand.h>
