@@ -212,6 +212,14 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
         }
     }
 
+    /* Open port for grasp data debugging. */
+    if(!port_grasp_data_.open("/" + log_name_ + "/grasp-data:o"))
+    {
+        yError() << log_name_ + "::configure. Error: cannot open port for grasp data debugging.";
+
+        return false;
+    }
+
     /* Objects maps. */
     objects_map_["o003"] = "003_cracker_box";
     objects_map_["o004"] = "004_sugar_box";
@@ -892,9 +900,9 @@ bool Module::execute_grasp(const Pose& pose, const Pose& feedback, const bool& v
         if ((cart_left_ == nullptr) && (cart_right_ == nullptr))
             return false;
 
-        std::vector<cardinal_points_grasp::rankable_candidate> candidates;
-        std::vector<cardinal_points_grasp::rankable_candidate> candidates_l;
-        std::vector<cardinal_points_grasp::rankable_candidate> candidates_r;
+        std::vector<rankable_candidate> candidates;
+        std::vector<rankable_candidate> candidates_l;
+        std::vector<rankable_candidate> candidates_r;
         int context_l;
         int context_r;
 
@@ -927,7 +935,7 @@ bool Module::execute_grasp(const Pose& pose, const Pose& feedback, const bool& v
             return false;
         }
 
-        show_grasp_candidates(object_name_, pose, candidates);
+        send_grasp_data(object_name_, pose, candidates);
 
         const auto& best = candidates[0];
         grasp_type_ = std::get<0>(best);
@@ -1291,11 +1299,32 @@ void Module::set_face_expression(const std::string& type)
 }
 
 
-void Module::show_grasp_candidates
+void Module::send_grasp_data
 (
     const std::string& name,
     const Eigen::Transform<double, 3, Eigen::Affine>& pose,
-    const std::vector<cardinal_points_grasp::rankable_candidate>& candidates
+    const std::vector<rankable_candidate>& candidates
 )
 {
+    GraspData& grasp_data = port_grasp_data_.prepare();
+    grasp_data.candidates.clear();
+
+    grasp_data.object_name = name;
+
+    for (const auto& candidate : candidates)
+        grasp_data.candidates.push_back
+        (
+            RankableCandidate
+            (
+                std::get<0>(candidate),
+                std::get<1>(candidate),
+                std::get<2>(candidate),
+                std::get<3>(candidate)
+            )
+        );
+
+    grasp_data.object_pose.resize(4, 4);
+    toEigen(grasp_data.object_pose) = pose.matrix();
+
+    port_grasp_data_.write();
 }

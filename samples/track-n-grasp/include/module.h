@@ -16,6 +16,7 @@
 #include <Utils.h>
 #include <cardinal_points_grasp.h>
 
+#include <thrift/GraspData.h>
 #include <thrift/ModuleIDL.h>
 
 #include <yarp/os/BufferedPort.h>
@@ -314,9 +315,11 @@ private:
     std::string grasp_type_;
 
     /**
-     * Visualization.
+     * Debugging.
      */
-    void show_grasp_candidates(const std::string& name, const Eigen::Transform<double, 3, Eigen::Affine>& pose, const std::vector<cardinal_points_grasp::rankable_candidate>& candidates);
+    yarp::os::BufferedPort<GraspData> port_grasp_data_;
+
+    void send_grasp_data(const std::string& name, const Eigen::Transform<double, 3, Eigen::Affine>& pose, const std::vector<rankable_candidate>& candidates);
 
     /**
      * Name for log messages.

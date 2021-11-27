@@ -21,6 +21,8 @@
 
 #include <Eigen/Dense>
 
+#include <RankableCandidate.h>
+
 #include <yarp/os/Value.h>
 #include <yarp/os/Bottle.h>
 #include <yarp/dev/CartesianControl.h>
@@ -32,8 +34,6 @@
 #include <iCub/iKin/iKinFwd.h>
 
 namespace cardinal_points_grasp {
-
-typedef std::tuple<std::string, double, yarp::sig::Matrix, yarp::sig::Vector> rankable_candidate;
 
 /******************************************************************************/
 class CardinalPointsGrasp {

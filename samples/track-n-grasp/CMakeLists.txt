@@ -61,6 +61,7 @@ target_link_libraries(${EXE_TARGET_NAME} PRIVATE
                                          YARP::YARP_init
                                          YARP::YARP_os
                                          YARP::YARP_sig
+                                         roft-grasp-data
 )
 
 install(TARGETS ${EXE_TARGET_NAME} DESTINATION bin)
