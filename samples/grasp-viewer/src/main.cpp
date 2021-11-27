@@ -37,5 +37,5 @@ int main(int argc, char** argv)
 
     /* Initialize the module. */
     Module module;
-    return module.configure(rf);
+    return module.run(rf);
 }

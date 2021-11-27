@@ -7,6 +7,11 @@
     </module>
 
     <module>
+        <name>roft-grasp-viewer</name>
+        <node>localhost</node>
+    </module>
+
+    <module>
         <name>speechRecognizer</name>
         <node>r1-vm-windows</node>
     </module>
@@ -51,6 +56,12 @@
       <from>/roft-track-n-grasp/speech/object:o</from>
       <to>/roft-track-n-grasp/rpc:i</to>
       <protocol>fast_tcp</protocol>
+    </connection>
+
+    <connection>
+      <from>/roft-track-n-grasp/grasp-data:o</from>
+      <to>/roft-grasp-viewer/grasp_info:i</to>
+      <protocol>unix_stream</protocol>
     </connection>
 
 </application>

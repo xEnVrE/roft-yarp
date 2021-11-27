@@ -1,6 +1,6 @@
 /******************************************************************************
  *                                                                            *
- * Copyright (C) 2020 Fondazione Istituto Italiano di Tecnologia (IIT)        *
+ * Copyright (C) 2021 Fondazione Istituto Italiano di Tecnologia (IIT)        *
  * All Rights Reserved.                                                       *
  *                                                                            *
  ******************************************************************************/
@@ -10,7 +10,10 @@
 
 #include <Eigen/Dense>
 
-#include <mutex>
+#include <iCubGaze.h>
+#include <RankableCandidate.h>
+#include <thrift/GraspData.h>
+
 #include <vector>
 #include <cmath>
 #include <limits>
@@ -18,12 +21,6 @@
 #include <vtkSmartPointer.h>
 #include <vtkCommand.h>
 #include <vtkPolyDataMapper.h>
-#include <vtkPlaneSource.h>
-#include <vtkPointData.h>
-#include <vtkUnsignedCharArray.h>
-#include <vtkVertexGlyphFilter.h>
-#include <vtkSampleFunction.h>
-#include <vtkContourFilter.h>
 #include <vtkArrowSource.h>
 #include <vtkTransform.h>
 #include <vtkProperty.h>
@@ -43,10 +40,9 @@
 
 #include <yarp/eigen/Eigen.h>
 #include <yarp/math/Math.h>
+#include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
 
-typedef std::tuple<std::string, double, yarp::sig::Matrix, yarp::sig::Vector> rankable_candidate;
-// static std::mutex mtx;
 
 namespace viewer {
 
@@ -145,15 +141,6 @@ class Viewer {
     vtkSmartPointer<vtkAxesActor>                    vtk_axes{nullptr};
     vtkSmartPointer<vtkInteractorStyleSwitch>        vtk_style{nullptr};
     vtkSmartPointer<vtkCamera>                       vtk_camera{nullptr};
-    vtkSmartPointer<vtkPlaneSource>                  vtk_floor{nullptr};
-    vtkSmartPointer<vtkPolyDataMapper>               vtk_floor_mapper{nullptr};
-    vtkSmartPointer<vtkActor>                        vtk_floor_actor{nullptr};
-    vtkSmartPointer<vtkPolyDataMapper>               vtk_object_mapper{nullptr};
-    vtkSmartPointer<vtkPoints>                       vtk_object_points{nullptr};
-    vtkSmartPointer<vtkUnsignedCharArray>            vtk_object_colors{nullptr};
-    vtkSmartPointer<vtkPolyData>                     vtk_object_polydata{nullptr};
-    vtkSmartPointer<vtkVertexGlyphFilter>            vtk_object_filter{nullptr};
-    vtkSmartPointer<vtkActor>                        vtk_object_actor{nullptr};
     std::vector<vtkSmartPointer<vtkArrowSource>>     vtk_arrows;
     std::vector<vtkSmartPointer<vtkPolyDataMapper>>  vtk_arrows_mappers;
     std::vector<vtkSmartPointer<vtkTransform>>       vtk_arrows_transforms;
@@ -164,8 +151,8 @@ class Viewer {
     Eigen::VectorXd                                  object_sizes;
     Eigen::Transform<double, 3, Eigen::Affine>       object_pose;
 
-public:
-    yarp::os::BufferedPort<yarp::sig::Vector>        port_grasp_info;
+    yarp::os::BufferedPort<GraspData>                port_grasp_data;
+    std::unique_ptr<iCubGaze>                        gaze;
 
 public:
     /**************************************************************************/
@@ -197,9 +184,10 @@ public:
         vtk_style->SetCurrentStyleToTrackballCamera();
         vtk_renderWindowInteractor->SetInteractorStyle(vtk_style);
 
-        /* Open port for grasp information input. */
-        if (!port_grasp_info.open("/roft-grasp-viewer/grasp_info:i"))
+        if (!port_grasp_data.open("/roft-grasp-viewer/grasp-data:i"))
             throw(std::runtime_error("Viewer::ctor. Error: cannot open port for grasp information input."));
+
+        gaze = std::unique_ptr<iCubGaze>(new iCubGaze("roft-grasp-viewer"));
     }
 
     /**************************************************************************/
@@ -207,6 +195,7 @@ public:
         vtk_renderWindowInteractor->Initialize();
         vtk_renderWindowInteractor->CreateRepeatingTimer(period);
         vtk_updateCallback = vtkSmartPointer<vtkUpdateHandler>::New();
+        vtk_updateCallback->SetViewer(this);
         vtk_renderWindowInteractor->AddObserver(vtkCommand::TimerEvent, vtk_updateCallback);
         vtk_renderWindowInteractor->Start();
     }
@@ -214,6 +203,8 @@ public:
     /**************************************************************************/
     void stop() {
         vtk_updateCallback->ShutDown();
+        port_grasp_data.close();
+        gaze->close();
     }
 
     /**************************************************************************/
@@ -232,9 +223,49 @@ public:
     }
 
     /**************************************************************************/
-    void addCamera(const std::vector<double>& position, const std::vector<double>& focalpoint,
-                   const std::vector<double>& viewup, const double view_angle) {
-        // std::lock_guard<std::mutex> lck(mtx);
+    void update() {
+        bool blocking = false;
+        GraspData* grasp_data = port_grasp_data.read(blocking);
+
+        if (grasp_data != nullptr)
+        {
+            /* Extract camera information. */
+            yarp::sig::Vector cam_x;
+            yarp::sig::Vector cam_o;
+            gaze->controller().getLeftEyePose(cam_x, cam_o);
+
+            yarp::os::Bottle info;
+            gaze->controller().getInfo(info);
+            const auto w = info.find("camera_width_left").asInt();
+            const auto fov_h = info.find("camera_intrinsics_left").asList()->get(0).asFloat64();
+            const auto view_angle = 2. * std::atan((w / 2.) / fov_h) * (180. / M_PI);
+
+            /* Extract grasp data. */
+            Eigen::Transform<double, 3, Eigen::Affine> object_pose;
+            object_pose.matrix() = yarp::eigen::toEigen(grasp_data->object_pose);
+
+            std::vector<rankable_candidate> candidates;
+            for (const auto& candidate : grasp_data->candidates)
+                candidates.push_back(std::make_tuple(candidate.hand, candidate.cost, candidate.candidate, candidate.center));
+
+            /* Update viewer. */
+            updateCamera
+            (
+                {cam_x[0], cam_x[1], cam_x[2]},
+                {object_pose.translation()(0), object_pose.translation()(1), object_pose.translation()(2)},
+                {0., 0., 1.},
+                view_angle
+            );
+            updateObject(grasp_data->object_name, object_pose);
+            focusOnObject();
+            showCandidates(candidates);
+        }
+    }
+
+private:
+    /**************************************************************************/
+    void updateCamera(const std::vector<double>& position, const std::vector<double>& focalpoint,
+                      const std::vector<double>& viewup, const double view_angle) {
         vtk_camera = vtkSmartPointer<vtkCamera>::New();
         vtk_camera->SetPosition(position.data());
         vtk_camera->SetFocalPoint(focalpoint.data());
@@ -243,9 +274,8 @@ public:
         vtk_renderer->SetActiveCamera(vtk_camera);
     }
 
-    /**************************************************************************/
-    void addObject(const std::string& name, const Eigen::Transform<double, 3, Eigen::Affine>& pose) {
-        // std::lock_guard<std::mutex> lck(mtx);
+    // /**************************************************************************/
+    void updateObject(const std::string& name, const Eigen::Transform<double, 3, Eigen::Affine>& pose) {
 
         object_sizes.resize(3);
         object_sizes(0) = object_properties.at(name)(0) / 2;
@@ -263,7 +293,6 @@ public:
 
     /**************************************************************************/
     void focusOnObject() {
-        // std::lock_guard<std::mutex> lck(mtx);
         std::vector<double> centroid(3);
         centroid[0] = object_pose.translation()(0);
         centroid[1] = object_pose.translation()(1);
@@ -274,7 +303,6 @@ public:
 
     /**************************************************************************/
     bool showCandidates(const std::vector<rankable_candidate>& candidates) {
-        // std::lock_guard<std::mutex> lck(mtx);
         if (!vtk_arrows_actors.empty()) {
             for (auto vtk_actor:vtk_arrows_actors) {
                 vtk_renderer->RemoveActor(vtk_actor);

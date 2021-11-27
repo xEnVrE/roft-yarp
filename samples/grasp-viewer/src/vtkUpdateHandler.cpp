@@ -28,12 +28,14 @@ void vtkUpdateHandler::Execute(vtkObject *caller, unsigned long vtkNotUsed(event
 
     if (shutdown)
     {
-        viewer->port_grasp_info.close();
         iren->GetRenderWindow()->Finalize();
         iren->TerminateApp();
     }
     else
+    {
+        viewer->update();
         iren->GetRenderWindow()->Render();
+    }
 }
 
 void vtkUpdateHandler::ShutDown()

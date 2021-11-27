@@ -14,16 +14,12 @@
 #include <yarp/os/RFModule.h>
 
 
-class Module : public yarp::os::RFModule
+class Module
 {
 public:
-    bool configure(yarp::os::ResourceFinder& rf) override;
-
-    bool updateModule() override;
+    bool run(yarp::os::ResourceFinder& rf);
 
 private:
-    // void show_grasp_candidates(const std::string& name, const Eigen::Transform<double, 3, Eigen::Affine>& pose, const std::vector<cardinal_points_grasp::rankable_candidate>& candidates);
-
     std::shared_ptr<viewer::Viewer> viewer_;
 
     const std::string log_name_ = "roft-grasp-viewer";

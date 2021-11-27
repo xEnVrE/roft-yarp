@@ -11,8 +11,10 @@ set(EXE_TARGET_NAME roft-grasp-viewer)
 
 # YARP
 find_package(YARP REQUIRED COMPONENTS
+                           dev
                            eigen
                            os
+                           math
                            sig
 )
 
@@ -29,8 +31,10 @@ endif()
 add_executable(${EXE_TARGET_NAME}
                include/module.h
                include/viewer.h
+               include/iCubGaze.h
                src/main.cpp
                src/module.cpp
+               src/iCubGaze.cpp
                src/vtkUpdateHandler.cpp
 )
 
@@ -38,11 +42,14 @@ target_include_directories(${EXE_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR
 
 target_link_libraries(${EXE_TARGET_NAME} PRIVATE
                                          Eigen3::Eigen
+                                         YARP::YARP_dev
                                          YARP::YARP_eigen
                                          YARP::YARP_init
+                                         YARP::YARP_math
                                          YARP::YARP_os
                                          YARP::YARP_sig
                                          ${VTK_LIBRARIES}
+                                         roft-grasp-data
 )
 if (VTK_VERSION VERSION_GREATER_EQUAL "8.90.0")
   vtk_module_autoinit(TARGETS roft-track-n-grasp MODULES ${VTK_LIBRARIES})
