@@ -232,8 +232,10 @@ bool Module::configure(yarp::os::ResourceFinder& rf)
     joints_left_arm_ = std::make_shared<iCubMotorsPositions>(robot, "left", log_name_ + "/left_arm", /* use_arm = */ true, /* use_torso = */ false);
     joints_right_arm_ = std::make_shared<iCubMotorsPositions>(robot, "right", log_name_ + "/right_arm", /* use_arm = */ true, /* use_torso = */ false);
     joints_torso_ = std::make_shared<iCubMotorsPositions>(robot, "no_laterality", log_name_ + "/torso", /* use_arm = */ false, /* use_torso = */ true);
-    joints_left_hand_ = std::make_shared<iCubMotorsPositions>(robot, "left", log_name_ + "/left_hand", /* use_arm = */ true, /* use_torso = */ false);
-    joints_right_hand_ = std::make_shared<iCubMotorsPositions>(robot, "right", log_name_ + "/right_hand", /* use_arm = */ true, /* use_torso = */ false);
+    if (enable_part_left)
+        joints_left_hand_ = std::make_shared<iCubMotorsPositions>(robot, "left", log_name_ + "/left_hand", /* use_arm = */ true, /* use_torso = */ false);
+    if (enable_part_right)
+        joints_right_hand_ = std::make_shared<iCubMotorsPositions>(robot, "right", log_name_ + "/right_hand", /* use_arm = */ true, /* use_torso = */ false);
 
     /* Configure iCub Cartesian controllers. */
     if (enable_part_left)
