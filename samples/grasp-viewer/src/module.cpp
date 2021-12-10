@@ -38,7 +38,7 @@ bool Module::run(yarp::os::ResourceFinder& rf)
     object_properties.at("006_mustard_bottle")(2) = 0.1913;
 
     /* Initialize the viewer and load the objects. */
-    viewer_ = std::make_shared<Viewer>(10, 370, width, height);
+    viewer_ = std::make_shared<Viewer>(1325, 255, width, height);
     viewer_->loadObjects(object_properties, object_meshes_path);
 
     /* Start the viewer. */
