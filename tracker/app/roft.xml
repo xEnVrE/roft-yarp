@@ -14,31 +14,31 @@
 
     <module>
         <name>yarpview</name>
-        <parameters>--name /roft-tracker/viewer/segmentation:i --synch</parameters>
+        <parameters>--name /roft-tracker/viewer/segmentation:i --compact --w 576 --h 432 --x 100 --y 100 </parameters>
         <node>localhost</node>
     </module>
 
     <module>
         <name>yarpview</name>
-        <parameters>--name /roft-tracker/viewer/refined_segmentation:i --synch</parameters>
+        <parameters>--name /roft-tracker/viewer/refined_segmentation:i --synch --compact --w 576 --h 432 --x 712 --y 100</parameters>
         <node>localhost</node>
     </module>
 
     <module>
         <name>yarpview</name>
-        <parameters>--name /roft-tracker/viewer/pose_estimation:i</parameters>
+        <parameters>--name /roft-tracker/viewer/pose_estimation:i --compact --w 576 --h 432 --x 100 --y 584</parameters>
         <node>localhost</node>
     </module>
 
-    <module>
-        <name>yarpview</name>
-        <parameters>--name /roft-tracker/viewer/outlier_rejection:i</parameters>
-        <node>localhost</node>
-    </module>
+    <!-- <module> -->
+    <!--     <name>yarpview</name> -->
+    <!--     <parameters>-\-name /roft-tracker/viewer/outlier_rejection:i</parameters> -->
+    <!--     <node>localhost</node> -->
+    <!-- </module> -->
 
     <module>
         <name>yarpview</name>
-        <parameters>--name /roft-tracker/viewer/pose_render:i --synch</parameters>
+        <parameters>--name /roft-tracker/viewer/pose_render:i --synch --compact --w 576 --h 432 --x 712 --y 584</parameters>
         <node>localhost</node>
     </module>
 
